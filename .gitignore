@@ -3,6 +3,8 @@
 /backend/.env
 /backend/target
 /backend/documents.db
+/backend/documents.db-shm
+/backend/documents.db-wal
 /frontend/target
 /frontend/dist
 
