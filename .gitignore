@@ -1,0 +1,8 @@
+.env
+/target
+/backend/.env
+/backend/target
+/backend/documents.db
+/frontend/target
+/frontend/dist
+

@@ -1,0 +1,37 @@
+[package]
+name = "dr-markdown-frontend"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+# Leptos framework
+leptos = { version = "0.8", features = ["csr"] }
+leptos_router = { version = "0.8" }
+
+# HTTP client
+reqwest = { version = "0.12", features = ["json"] }
+gloo-net = { version = "0.6", features = ["http"] }
+
+# Serialization
+serde = { workspace = true }
+serde_json = { workspace = true }
+
+# Utilities
+uuid = { workspace = true }
+chrono = { workspace = true }
+
+# Markdown parsing
+markdown-it = "0.6"
+
+# Web APIs
+web-sys = "0.3"
+wasm-bindgen = "0.2"
+console_error_panic_hook = "0.1"
+
+# Local storage
+gloo-storage = "0.3"
+
+[profile.release]
+opt-level = 'z'
+lto = true
+codegen-units = 1
