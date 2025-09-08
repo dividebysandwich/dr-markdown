@@ -2,6 +2,10 @@
 
 A full-stack Rust application for online editing of markdown documents, featuring a REST API backend with SQLite storage and a Leptos-powered web frontend.
 
+<img width="1348" height="693" alt="image" src="https://github.com/user-attachments/assets/e8f1b003-6fd2-4fb4-9a3d-5edb3e17ab2c" />
+
+
+
 ## Features
 
 - **User Authentication**: Username/password authentication with JWT tokens
