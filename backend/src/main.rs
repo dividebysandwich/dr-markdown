@@ -59,7 +59,7 @@ async fn main() -> Result<()> {
         .with_state(state);
 
     // Start server
-    let addr = format!("{}:{}", SERVER_ADDR, get_server_port());
+    let addr = format!("{}:{}/{}", SERVER_ADDR, get_server_port(), APP_BASE.trim_start_matches('/'));
     let listener = tokio::net::TcpListener::bind(&addr).await?;
     println!("Dr. Markdown server running on http://{}", addr);
 
