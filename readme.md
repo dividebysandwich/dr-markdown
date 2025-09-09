@@ -72,7 +72,7 @@ The application can be configured via environment variables:
 - `SERVER_PORT`: Backend server port (default: 3001)
 - `ALLOW_REGISTRATION`: Allow new user registration (default: true)
 - `LEPTOS_APP_BASE_PATH`: Base path of the application (default: ``)
-- `API_URL`: Address the frontend uses to reach the backend (default: `localhost:3001`)
+- `API_URL`: Address the frontend uses to reach the backend (default: `http://localhost:3001/api`)
 
 ## API Endpoints
 
