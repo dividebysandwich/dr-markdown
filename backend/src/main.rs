@@ -54,7 +54,7 @@ async fn main() -> Result<()> {
     
     // Build router
     let app = Router::new()
-        .nest(format!("{}{}", APP_BASE, "/api").as_str(), routes::create_routes())
+        .nest("/api", routes::create_routes())
         .layer(CorsLayer::permissive())
         .with_state(state);
 
