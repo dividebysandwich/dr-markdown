@@ -7,11 +7,16 @@ use crate::{
     pages::{DocumentPage, HomePage, LoginPage, RegisterPage},
 };
 
+const APP_BASE: &str = match option_env!("LEPTOS_APP_BASE_PATH") {
+    Some(path) => path,
+    None => "",
+};
+
 #[component]
 pub fn App() -> impl IntoView {
     view! {
         <AuthProvider>
-            <Router>
+            <Router base=APP_BASE>
                 <main class="min-h-screen bg-gray-50">
                     <Routes fallback=NotFound>
                         <Route path=path!("/") view=HomePage/>

@@ -20,6 +20,23 @@ pub struct AppState {
     pub config: Arc<Config>,
 }
 
+const APP_BASE: &str = match option_env!("LEPTOS_APP_BASE_PATH") {
+    Some(path) => path,
+    None => "",
+};
+
+const SERVER_ADDR: &str = match option_env!("SERVER_ADDR") {
+    Some(addr) => addr,
+    None => "127.0.0.1",
+};
+
+fn get_server_port() -> u16 {
+    match option_env!("SERVER_PORT") {
+        Some(port) => port.parse().unwrap_or(3001),
+        None => 3001,
+    }
+}
+
 #[tokio::main]
 async fn main() -> Result<()> {
     // Load environment variables
@@ -34,18 +51,19 @@ async fn main() -> Result<()> {
     db.migrate().await?;
 
     let state = AppState { db, config };
-
+    
     // Build router
     let app = Router::new()
-        .nest("/api", routes::create_routes())
+        .nest(format!("{}{}", APP_BASE, "/api").as_str(), routes::create_routes())
         .layer(CorsLayer::permissive())
         .with_state(state);
 
     // Start server
-    let listener = tokio::net::TcpListener::bind("127.0.0.1:3001").await?;
-    println!("Dr. Markdown server running on http://127.0.0.1:3001");
-    
+    let addr = format!("{}:{}", SERVER_ADDR, get_server_port());
+    let listener = tokio::net::TcpListener::bind(&addr).await?;
+    println!("Dr. Markdown server running on http://{}", addr);
+
     axum::serve(listener, app).await?;
     
     Ok(())
-}
+}   
