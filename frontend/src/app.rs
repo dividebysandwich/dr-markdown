@@ -7,7 +7,7 @@ use crate::{
     pages::{DocumentPage, HomePage, LoginPage, RegisterPage},
 };
 
-const APP_BASE: &str = match option_env!("LEPTOS_APP_BASE_PATH") {
+pub const APP_BASE: &str = match option_env!("LEPTOS_APP_BASE_PATH") {
     Some(path) => path,
     None => "",
 };

@@ -6,6 +6,7 @@ use std::sync::Arc;
 use leptos::task::spawn_local;
 
 use crate::{api::ApiClient, auth::use_auth, models::Document};
+use crate::app::APP_BASE;
 
 #[component]
 pub fn DocumentPage() -> impl IntoView {
@@ -95,7 +96,7 @@ pub fn DocumentPage() -> impl IntoView {
                                     {move || error.get().map(|err| view! {
                                         <p class="text-red-600 mb-4">{err}</p>
                                     })}
-                                    <A href="/" prop:class="text-blue-600 hover:text-blue-800 underline">
+                                    <A href=format!("{}/", APP_BASE) prop:class="text-blue-600 hover:text-blue-800 underline">
                                         "Go back home"
                                     </A>
                                 </div>

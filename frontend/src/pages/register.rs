@@ -3,6 +3,7 @@ use leptos_router::hooks::use_navigate;
 use leptos_router::components::A;
 
 use crate::auth::use_auth;
+use crate::app::APP_BASE;
 
 #[component]
 pub fn RegisterPage() -> impl IntoView {
@@ -77,7 +78,7 @@ pub fn RegisterPage() -> impl IntoView {
                     </h2>
                     <p class="mt-2 text-center text-sm text-gray-600">
                         "Or "
-                        <A href="/login" attr:class="font-medium text-blue-600 hover:text-blue-500">
+                        <A href=format!("{}/login", APP_BASE) attr:class="font-medium text-blue-600 hover:text-blue-500">
                             "sign in to existing account"
                         </A>
                     </p>
