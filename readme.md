@@ -68,10 +68,11 @@ The application can be configured via environment variables:
 
 - `DATABASE_URL`: SQLite database path (default: `./documents.db`)
 - `JWT_SECRET`: Secret key for JWT tokens (change in production!)
+- `SERVER_ADDR`: Backend server listen address (default: `127.0.0.1`)
 - `SERVER_PORT`: Backend server port (default: 3001)
 - `ALLOW_REGISTRATION`: Allow new user registration (default: true)
 - `LEPTOS_APP_BASE_PATH`: Base path of the application (default: ``)
-- `SERVER_ADDR`: Backend server listen address (default: `127.0.0.1`)
+- `API_URL`: Address the frontend uses to reach the backend (default: `localhost:3001`)
 
 ## API Endpoints
 

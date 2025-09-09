@@ -4,7 +4,10 @@ use uuid::Uuid;
 
 use crate::models::*;
 
-pub const API_BASE: &str = "http://localhost:3001/api";
+pub const API_URL: &str = match option_env!("API_URL") {
+    Some(path) => path,
+    None => "http://localhost:3001/api",
+};
 
 #[derive(Debug, PartialEq)]
 pub struct ApiClient {
@@ -37,7 +40,7 @@ impl ApiClient {
     }
 
     fn build_request(&self, method: &str, path: &str) -> RequestBuilder {
-        let url = format!("{}{}", API_BASE, path);
+        let url = format!("{}{}", API_URL, path);
         let mut req = RequestBuilder::new(&url).method(gloo_net::http::Method::from_bytes(method.as_bytes()).unwrap());
 
         if let Some(token) = &self.token {
