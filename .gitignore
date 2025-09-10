@@ -7,4 +7,4 @@
 /backend/documents.db-wal
 /frontend/target
 /frontend/dist
-
+/frontend/node_modules

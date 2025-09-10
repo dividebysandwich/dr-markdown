@@ -1,0 +1,13 @@
+{
+  "devDependencies": {
+    "tailwindcss": "^4.1.13"
+  },
+  "scripts": {
+    "css:init": "tailwindcss init",
+    "css:watch": "tailwindcss -i ./assets/input.css -o ./assets/output.css --watch",
+    "css:build": "tailwindcss -i ./assets/input.css -o ./assets/output.css --minify"
+  },
+  "dependencies": {
+    "@tailwindcss/cli": "^4.1.13"
+  }
+}
