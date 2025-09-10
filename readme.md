@@ -1,10 +1,14 @@
-# Dr. Markdown
+<img align="left" height="200" alt="drmarkdown" src="https://github.com/user-attachments/assets/5a767015-ea17-49f5-bbfe-e0b3713ebd6d" />
 
+# Dr. Markdown
 A full-stack Rust application for online editing of markdown documents, featuring a REST API backend with SQLite storage and a Leptos-powered web frontend.
 
+<hr/>
+
+<br/>
+<br/>
+
 <img width="1348" height="693" alt="image" src="https://github.com/user-attachments/assets/e8f1b003-6fd2-4fb4-9a3d-5edb3e17ab2c" />
-
-
 
 ## Features
 
@@ -12,6 +16,7 @@ A full-stack Rust application for online editing of markdown documents, featurin
 - **Document Management**: Create, edit, rename, and delete markdown documents
 - **Real-time Preview**: Switch between edit and preview modes
 - **Responsive UI**: Clean, modern interface with document sidebar
+- **Mobile Friendly**: Dynamic sidebar for good usability on desktop and mobile
 - **Configurable Registration**: Option to disable new user registration
 - **Markdown Rendering**: Full markdown support with syntax highlighting
 
