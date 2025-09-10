@@ -1022,6 +1022,14 @@
       background-color: #1F2937; /* Tailwind's gray-800 */
   }
 
+  html.dark .hover\:bg-gray-50 {
+    &:hover {
+      @media (hover: hover) {
+        background-color: #2F3947;
+      }
+    }
+  }
+
   /* Override light-gray borders */
   html.dark .border-gray-200 {
       border-color: #374151; /* Tailwind's gray-700 */
