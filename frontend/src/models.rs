@@ -7,6 +7,7 @@ pub struct User {
     pub id: Uuid,
     pub username: String,
     pub created_at: DateTime<Utc>,
+    pub theme: String,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -25,6 +26,11 @@ pub struct LoginRequest {
 pub struct RegisterRequest {
     pub username: String,
     pub password: String,
+}
+
+#[derive(Debug, Serialize)]
+pub struct SettingsRequest {
+    pub theme: String,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]

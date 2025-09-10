@@ -37,6 +37,9 @@ fn get_server_port() -> u16 {
     }
 }
 
+pub const THEME_LIGHT: &str = "light";
+pub const THEME_DARK: &str = "dark";
+
 #[tokio::main]
 async fn main() -> Result<()> {
     // Load environment variables

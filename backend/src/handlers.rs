@@ -11,7 +11,7 @@ use crate::{
     auth::{AuthService, AuthUser},
     models::{
         AuthResponse, CreateDocumentRequest, CreateUserRequest, DocumentResponse,
-        DocumentSummary, LoginRequest, UpdateDocumentRequest, UserResponse,
+        DocumentSummary, LoginRequest, UpdateDocumentRequest, UserResponse, SettingsRequest
     },
     AppState,
 };
@@ -91,6 +91,25 @@ pub async fn get_profile(auth_user: AuthUser, State(state): State<AppState>) -> 
     let response: UserResponse = user.into();
     Ok(Json(response))
 }
+
+pub async fn update_user_settings(
+    auth_user: AuthUser,
+    State(state): State<AppState>,
+    Json(request): Json<SettingsRequest>,
+) -> Result<impl IntoResponse, AppError> {
+
+    request.validate()?;
+
+    let updated_user = state
+        .db
+        .update_user_theme(auth_user.user_id, request.theme.as_str())
+        .await?
+        .ok_or(AppError::UserNotFound)?;
+
+    let response: UserResponse = updated_user.into();
+    Ok(Json(response))
+}
+
 
 pub async fn create_document(
     auth_user: AuthUser,

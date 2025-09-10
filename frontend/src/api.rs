@@ -96,6 +96,24 @@ impl ApiClient {
         handle_response(response).await
     }
 
+    // Update user settings (e.g., theme)
+    pub async fn update_user_settings(&self, theme: &str) -> Result<User, ApiError> {
+        let request = self
+            .build_request("PUT", "/auth/profile")
+            .json(&SettingsRequest {
+                theme: theme.to_string(),
+            })
+            .map_err(|e| ApiError {
+                error: format!("Serialization error: {}", e),
+            })?;
+
+        let response = request.send().await.map_err(|e| ApiError {
+            error: format!("Network error: {}", e),
+        })?;
+
+        handle_response(response).await
+    }
+
     #[allow(dead_code)]
     pub async fn get_profile(&self) -> Result<User, ApiError> {
         let req_builder = self.build_request("GET", "/auth/profile");

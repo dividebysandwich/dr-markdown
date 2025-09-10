@@ -10,6 +10,7 @@ pub fn create_routes() -> Router<AppState> {
         .route("/auth/register", post(handlers::register))
         .route("/auth/login", post(handlers::login))
         .route("/auth/profile", get(handlers::get_profile))
+        .route("/auth/profile", put(handlers::update_user_settings))
         .route("/documents", post(handlers::create_document))
         .route("/documents", get(handlers::get_documents))
         .route("/documents/{id}", get(handlers::get_document))

@@ -1,5 +1,6 @@
 use gloo_storage::{LocalStorage, Storage};
 use leptos::prelude::*;
+use leptos::logging::log;
 
 use crate::{api::ApiClient, models::User};
 
@@ -29,6 +30,7 @@ pub struct AuthContext {
     pub login: Action<(String, String), Result<(), String>>,
     pub register: Action<(String, String), Result<(), String>>,
     pub logout: Action<(), ()>,
+    pub update_settings: Action<User, Result<User, String>>,
 }
 
 #[component]
@@ -101,6 +103,37 @@ pub fn AuthProvider(children: ChildrenFn) -> impl IntoView {
         }
     });
 
+    let update_settings = Action::new_local(move |updated_user: &User| {
+        let user_to_update = updated_user.clone();
+        let set_state = set_state; // Capture the WriteSignal for state updates
+
+        async move {
+            let token = state.get_untracked().token;
+            if let Some(token) = token {
+                let client = ApiClient::with_token(token);
+
+                match client.update_user_settings(&user_to_update.theme).await {
+                    Ok(saved_user) => {
+                        // Update localStorage
+                        let _ = LocalStorage::set(USER_KEY, &saved_user);
+
+                        // Update the global state
+                        set_state.update(|s| {
+                            log!("State updated! New theme is: {}", saved_user.theme);
+                            s.user = Some(saved_user.clone());
+                        });
+
+                        Ok(saved_user)
+                    }
+                    Err(e) => Err(e.error),
+                }
+            } else {
+                // If for some reason there's no token, return an error immediately.
+                Err("Authentication token not found.".to_string())
+            }
+        }
+    });
+
     let logout = Action::new_local(move |_: &()| {
         async move {
             let _ = LocalStorage::delete(TOKEN_KEY);
@@ -118,6 +151,7 @@ pub fn AuthProvider(children: ChildrenFn) -> impl IntoView {
         login,
         register,
         logout,
+        update_settings,
     };
 
     provide_context(auth_context);

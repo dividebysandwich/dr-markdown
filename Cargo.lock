@@ -774,6 +774,7 @@ dependencies = [
  "gloo-net",
  "gloo-storage",
  "leptos",
+ "leptos_meta",
  "leptos_router",
  "markdown-it",
  "reqwest",
@@ -1772,6 +1773,21 @@ dependencies = [
  "server_fn_macro",
  "syn 2.0.106",
  "uuid",
+]
+
+[[package]]
+name = "leptos_meta"
+version = "0.8.5"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "2d489e38d3f541e9e43ecc2e3a815527840345a2afca629b3e23fcc1dd254578"
+dependencies = [
+ "futures",
+ "indexmap",
+ "leptos",
+ "or_poisoned",
+ "send_wrapper",
+ "wasm-bindgen",
+ "web-sys",
 ]
 
 [[package]]

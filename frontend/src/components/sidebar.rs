@@ -11,6 +11,7 @@ pub fn DocumentSidebar(
     on_select: impl Fn(Uuid) + Clone + Send + Sync + 'static,
     on_create: impl Fn(String) + Clone + Send + Sync + 'static,
     on_logout: impl Fn() + Clone + Send + Sync + 'static,
+    on_theme: impl Fn() + Clone + Send + Sync + 'static,
     user_name: String,
 ) -> impl IntoView {
     let (new_doc_title, set_new_doc_title) = signal(String::new());
@@ -50,6 +51,18 @@ pub fn DocumentSidebar(
             <header class="p-4 border-b border-gray-200">
                 <div class="flex items-center justify-between mb-4">
                      <span class="text-xl font-semibold text-gray-800">"Documents"</span>
+                    <button
+                        class="text-gray-400 hover:text-gray-600 mr-2"
+                        on:click=move |_| {
+                            let on_theme = on_theme.clone();
+                            on_theme();
+                        }
+                        title="Toggle Theme"
+                    >
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path d="M12 3v1a9 9 0 100 18v1a10 10 0 110-20z" />
+                        </svg>
+                    </button>
                     <button
                         class="text-gray-400 hover:text-gray-600"
                         on:click=move |_| {

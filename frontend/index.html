@@ -4,6 +4,11 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Dr. Markdown</title>
+    <script>
+      tailwind.config = {
+        darkMode: 'class', // This tells Tailwind to look for a "dark" class on a parent element
+      }
+    </script>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
         .prose {
@@ -53,6 +58,25 @@
             margin: 1em 0;
             color: #6b7280;
         }
+        .dark .prose h1,
+        .dark .prose h2,
+        .dark .prose h3 {
+            color: #d1d5db; /* A light gray for headings */
+        }
+        .dark .prose p {
+            color: #9ca3af; /* A slightly darker gray for paragraphs */
+        }
+        .dark .prose code {
+            background-color: #374151; /* dark gray */
+            color: #e5e7eb;
+        }
+        .dark .prose pre {
+            background-color: #1f2937;
+        }
+        .dark .prose blockquote {
+            border-left-color: #4b5563;
+            color: #9ca3af;
+        }        
         menu,
         ol,
         ul {

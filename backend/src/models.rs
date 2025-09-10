@@ -10,6 +10,7 @@ pub struct User {
     pub password_hash: String,
     pub created_at: DateTime<Utc>,
     pub updated_at: DateTime<Utc>,
+    pub theme: String,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, sqlx::FromRow)]
@@ -36,6 +37,11 @@ pub struct LoginRequest {
     pub password: String,
 }
 
+#[derive(Debug, Deserialize, Validate)]
+pub struct SettingsRequest {
+    pub theme: String,
+}
+
 #[derive(Debug, Serialize)]
 pub struct AuthResponse {
     pub token: String,
@@ -47,6 +53,7 @@ pub struct UserResponse {
     pub id: Uuid,
     pub username: String,
     pub created_at: DateTime<Utc>,
+    pub theme: String,
 }
 
 impl From<User> for UserResponse {
@@ -55,6 +62,7 @@ impl From<User> for UserResponse {
             id: user.id,
             username: user.username,
             created_at: user.created_at,
+            theme: user.theme,
         }
     }
 }

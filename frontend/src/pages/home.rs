@@ -10,6 +10,7 @@ use crate::{
     auth::use_auth,
     components::DocumentSidebar,
     models::{Document, DocumentSummary},
+    app::{THEME_LIGHT, THEME_DARK}
 };
 
 #[component]
@@ -107,6 +108,21 @@ pub fn HomePage() -> impl IntoView {
                             }
                             on_create=move |title| { create_document.dispatch(title); }
                             on_logout=move || { auth.logout.dispatch(()); }
+                            on_theme=move || {
+                                // Make sure we have a user to update
+                                if let Some(mut current_user) = auth.state.get().user {
+                                    // Toggle the theme on the user object
+                                    let current_theme = current_user.theme.clone();
+                                    current_user.theme = if current_theme == THEME_LIGHT {
+                                        THEME_DARK.to_string()
+                                    } else {
+                                        THEME_LIGHT.to_string()
+                                    };
+
+                                    // Dispatch the action with the updated user data
+                                    auth.update_settings.dispatch(current_user);
+                                }
+                            }
                             user_name=user.username.clone()
                         />
 

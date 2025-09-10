@@ -4,6 +4,7 @@ use sqlx::sqlite::SqlitePool;
 use uuid::Uuid;
 
 use crate::models::{Document, User};
+use crate::THEME_LIGHT;
 
 #[derive(Clone)]
 pub struct Database {
@@ -36,30 +37,64 @@ impl Database {
     pub async fn create_user(&self, username: &str, password_hash: &str) -> Result<User> {
         let id = Uuid::new_v4();
         let now = Utc::now();
+        let theme = THEME_LIGHT; // default theme
 
         let user = sqlx::query_as!(
             User,
             r#"
-            INSERT INTO users (id, username, password_hash, created_at, updated_at)
-            VALUES (?, ?, ?, ?, ?)
+            INSERT INTO users (id, username, password_hash, created_at, updated_at, theme)
+            VALUES (?, ?, ?, ?, ?, ?)
             RETURNING 
                 id as "id: Uuid", 
                 username, 
                 password_hash, 
                 created_at as "created_at: DateTime<Utc>", 
-                updated_at as "updated_at: DateTime<Utc>"
+                updated_at as "updated_at: DateTime<Utc>",
+                theme
             "#,
-            // FIX: Add explicit type overrides for chrono::DateTime<Utc> columns
             id,
             username,
             password_hash,
             now,
-            now
+            now,
+            theme
         )
         .fetch_one(&self.pool)
         .await?;
 
         Ok(user)
+    }
+
+    pub async fn update_user_theme(&self, user_id: Uuid, theme: &str) -> Result<Option<User>> {
+        let now = Utc::now();
+
+        let existing = self.find_user_by_id(user_id).await?;
+        if existing.is_none() {
+            return Ok(None);
+        }
+
+        let user = sqlx::query_as!(
+            User,
+            r#"
+            UPDATE users
+            SET theme = ?, updated_at = ?
+            WHERE id = ?
+            RETURNING 
+                id as "id: Uuid", 
+                username, 
+                password_hash, 
+                created_at as "created_at: DateTime<Utc>", 
+                updated_at as "updated_at: DateTime<Utc>" ,
+                theme
+            "#,
+            theme,
+            now,
+            user_id
+        )
+        .fetch_one(&self.pool)
+        .await?;
+
+        Ok(Some(user))
     }
 
     pub async fn find_user_by_username(&self, username: &str) -> Result<Option<User>> {
@@ -71,7 +106,8 @@ impl Database {
                 username, 
                 password_hash, 
                 created_at as "created_at: DateTime<Utc>", 
-                updated_at as "updated_at: DateTime<Utc>"
+                updated_at as "updated_at: DateTime<Utc>",
+                theme
             FROM users WHERE username = ?
             "#,
             username
@@ -91,7 +127,8 @@ impl Database {
                 username, 
                 password_hash, 
                 created_at as "created_at: DateTime<Utc>", 
-                updated_at as "updated_at: DateTime<Utc>"
+                updated_at as "updated_at: DateTime<Utc>",
+                theme
             FROM users WHERE id = ?
             "#,
             user_id
