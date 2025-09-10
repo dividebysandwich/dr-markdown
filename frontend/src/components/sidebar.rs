@@ -2,6 +2,7 @@ use leptos::prelude::*;
 use uuid::Uuid;
 
 use crate::models::{Document, DocumentSummary};
+use crate::app::use_sidebar;
 
 #[component]
 pub fn DocumentSidebar(
@@ -14,6 +15,11 @@ pub fn DocumentSidebar(
     on_theme: impl Fn() + Clone + Send + Sync + 'static,
     user_name: String,
 ) -> impl IntoView {
+    let sidebar = use_sidebar();
+
+    // Create a closure to close the sidebar on mobile after an action
+    let close_sidebar = move || sidebar.0.set(false);
+
     let (new_doc_title, set_new_doc_title) = signal(String::new());
     let (show_create_form, set_show_create_form) = signal(false);
 
@@ -45,9 +51,15 @@ pub fn DocumentSidebar(
         ()
     });
 
+    let close_sidebar = move || sidebar.0.set(false);
 
     view! {
-        <aside class="w-80 bg-white border-r border-gray-200 flex flex-col">
+        <aside class=move || format!(
+            "w-80 bg-white dark:bg-gray-900 border-r border-gray-200 dark:border-gray-700 flex flex-col \
+            fixed inset-y-0 left-0 z-30 transform {} transition-transform duration-300 ease-in-out \
+            md:relative md:translate-x-0",
+            if sidebar.0.get() { "translate-x-0" } else { "-translate-x-full" }
+        )>
             <header class="p-4 border-b border-gray-200">
                 <div class="flex items-center justify-between mb-4">
                      <span class="text-xl font-semibold text-gray-800">"Documents"</span>
@@ -132,6 +144,7 @@ pub fn DocumentSidebar(
                                 each=move || documents.get()
                                 key=|doc| doc.id
                                 children=move |doc| {
+                                    let close_sidebar_clone = close_sidebar.clone();
                                     let is_selected = move || {
                                         selected_document.get()
                                             .map(|selected| selected.id == doc.id)
@@ -152,6 +165,7 @@ pub fn DocumentSidebar(
                                             // and `doc.id` (which is `Copy`).
                                             on:click=move |_| {
                                                 set_select_trigger.set(Some(doc.id));
+                                                close_sidebar_clone(); // Close sidebar on selection
                                             }
                                         >
                                             <div class="font-medium text-gray-900 text-sm truncate mb-1">

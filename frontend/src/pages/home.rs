@@ -10,7 +10,7 @@ use crate::{
     auth::use_auth,
     components::DocumentSidebar,
     models::{Document, DocumentSummary},
-    app::{THEME_LIGHT, THEME_DARK}
+    app::{THEME_LIGHT, THEME_DARK, use_sidebar},
 };
 
 #[component]
@@ -24,6 +24,9 @@ pub fn HomePage() -> impl IntoView {
             navigate("/login", Default::default());
         }
     });
+
+    // Signal for mobile sidebar
+    let sidebar_open = create_rw_signal(false);
 
     view! {
         <Show
@@ -92,7 +95,7 @@ pub fn HomePage() -> impl IntoView {
                 let client_for_on_select = client.clone();
 
                 view! {
-                    <div class="flex h-screen bg-gray-100">
+                    <div class="relative flex h-screen bg-gray-100 dark:bg-gray-800">
                         <DocumentSidebar
                             documents=documents.read_only().into()
                             selected_document=selected_document.read_only().into()
@@ -125,6 +128,13 @@ pub fn HomePage() -> impl IntoView {
                             }
                             user_name=user.username.clone()
                         />
+
+                        <Show when=move || sidebar_open.get()>
+                            <div
+                                class="fixed inset-0 bg-gray-900 bg-opacity-50 z-20 md:hidden"
+                                on:click=move |_| sidebar_open.set(false)
+                            ></div>
+                        </Show>
 
                         <main class="flex-1 flex flex-col overflow-hidden">
                             <Show
@@ -183,6 +193,7 @@ pub fn DocumentEditor(
     on_delete: impl Fn(Uuid) + 'static + Clone,
     client: Arc<ApiClient>,
 ) -> impl IntoView {
+    let sidebar = use_sidebar();
     let (content, set_content) = signal(document.content.clone());
     let (title, set_title) = signal(document.title.clone());
     let (is_editing, set_is_editing) = signal(false);
@@ -239,12 +250,14 @@ pub fn DocumentEditor(
     view! {
         <div class="flex-1 flex flex-col overflow-hidden">
             <header class="bg-white border-b border-gray-200 px-6 py-4 flex items-center justify-between">
-                <input
-                    class="text-xl font-semibold text-gray-900 border-none outline-none bg-transparent w-full"
-                    prop:value=title
-                    on:input=move |ev| set_title.set(event_target_value(&ev))
-                    on:blur=move |_| { save_document.dispatch(()); }
-                />
+                <div class="flex items-center flex-1">
+                    <input
+                        class="text-xl font-semibold text-gray-900 dark:text-gray-50 border-none outline-none bg-transparent w-full"
+                        prop:value=title
+                        on:input=move |ev| set_title.set(event_target_value(&ev))
+                        on:blur=move |_| { save_document.dispatch(()); }
+                    />
+                </div>
                 <div class="flex items-center space-x-3">
                     <button
                         class="px-4 py-2 text-sm font-medium text-gray-700 bg-gray-100 border border-gray-300 rounded-md hover:bg-gray-200 focus:outline-none focus:ring-2 focus:ring-blue-500"

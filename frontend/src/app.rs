@@ -7,6 +7,7 @@ use web_sys::window; // Using your version that compiles
 use crate::{
     auth::{AuthProvider, use_auth},
     pages::{DocumentPage, HomePage, LoginPage, RegisterPage},
+    components::DocumentSidebar,
 };
 
 pub const APP_BASE: &str = match option_env!("LEPTOS_APP_BASE_PATH") {
@@ -16,6 +17,15 @@ pub const APP_BASE: &str = match option_env!("LEPTOS_APP_BASE_PATH") {
 
 pub const THEME_LIGHT: &str = "light";
 pub const THEME_DARK: &str = "dark";
+
+// Define a context type to hold the sidebar signal
+#[derive(Clone, Copy)]
+pub struct SidebarContext(pub RwSignal<bool>);
+
+// A helper function to easily access the context
+pub fn use_sidebar() -> SidebarContext {
+    use_context::<SidebarContext>().expect("SidebarContext not found")
+}
 
 // App's only job is to create the providers.
 #[component]
@@ -33,6 +43,10 @@ pub fn App() -> impl IntoView {
 fn AppLayout() -> impl IntoView {
     // This is now SAFE because AppLayout is a child of AuthProvider.
     let auth = use_auth();
+
+    let sidebar_open = RwSignal::new(false);
+    // Provide it to all children
+    provide_context(SidebarContext(sidebar_open));
 
     // This Effect now has access to `auth` and will work correctly.
     Effect::new(move |_| {
@@ -52,16 +66,41 @@ fn AppLayout() -> impl IntoView {
     });
 
     view! {
-        <Router base=APP_BASE>
-            <main class="min-h-screen bg-gray-50 dark:bg-gray-900 text-gray-800 dark:text-gray-200">
-                <Routes fallback=NotFound>
-                    <Route path=path!("/") view=HomePage/>
-                    <Route path=path!("/login") view=LoginPage/>
-                    <Route path=path!("/register") view=RegisterPage/>
-                    <Route path=path!("/documents/:id") view=DocumentPage/>
-                </Routes>
+
+        <div class="relative flex h-screen bg-gray-100 dark:bg-gray-800">
+            // The overlay can live here, as it's shared by all pages
+            <Show when=move || sidebar_open.get()>
+                <div
+                    class="fixed inset-0 bg-gray-900 bg-opacity-50 z-20 md:hidden"
+                    on:click=move |_| sidebar_open.set(false)
+                ></div>
+            </Show>
+
+            <main class="flex-1 flex flex-col overflow-hidden">
+                // --- NEW: PERSISTENT MOBILE HEADER ---
+                <header class="bg-white dark:bg-gray-900 border-b border-gray-200 dark:border-gray-700 p-4 flex items-center md:hidden">
+                    <button
+                        class="text-gray-500 dark:text-gray-400 focus:outline-none"
+                        on:click=move |_| sidebar_open.update(|open| *open = !*open)
+                    >
+                        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"></path>
+                        </svg>
+                    </button>
+                    <h1 class="text-xl font-semibold text-gray-800 dark:text-gray-100 ml-4">"Dr. Markdown"</h1>
+                </header>            
+                // The Router renders the page components (like HomePage)
+                <Router base=APP_BASE>
+                    <Routes fallback=NotFound>
+                        <Route path=path!("/") view=HomePage/>
+                        <Route path=path!("/login") view=LoginPage/>
+                        <Route path=path!("/register") view=RegisterPage/>
+                        <Route path=path!("/documents/:id") view=DocumentPage/>
+                    </Routes>
+                
+                </Router>
             </main>
-        </Router>
+        </div>
     }
 }
 

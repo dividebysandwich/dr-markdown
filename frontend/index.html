@@ -1045,6 +1045,22 @@
   html.dark .bg-blue-50 {
       background-color: rgba(30, 64, 175, 0.5); /* A translucent dark blue */
   }
+  /* This sets the icon color in light mode */
+  .text-gray-500 {
+      color: #6B7280; /* Tailwind's gray-500 */
+  }
+
+  /* This sets the icon color in dark mode */
+  html.dark .text-gray-500 {
+      color: #9CA3AF; /* Tailwind's gray-400 */
+  }
+  .w-6 {
+      padding-top: 0.1rem; /* 6px */
+      width: 1.6rem; /* 24px */
+  }
+  .h-6 {
+      height: 1.6rem; /* 24px */
+  }
         .prose {
             max-width: none;
         }
@@ -1110,7 +1126,45 @@
         .dark .prose blockquote {
             border-left-color: #4b5563;
             color: #9ca3af;
-        }        
+        }
+
+  /* Classes for the header title input */
+  .flex-1 { flex: 1 1 0%; }
+  .w-full { width: 100%; }
+  .mr-4 { margin-right: 1rem; }
+
+  /* Base classes for the sliding sidebar animation */
+  .fixed { position: fixed; }
+  .inset-y-0 { top: 0; bottom: 0; }
+  .left-0 { left: 0; }
+  .z-20 { z-index: 20; }
+  .z-30 { z-index: 30; }
+  .transform { transform: translateX(var(--tw-translate-x, 0)); }
+  .-translate-x-full { --tw-translate-x: -100%; }
+  .translate-x-0 { --tw-translate-x: 0; }
+  .transition-transform { transition-property: transform; }
+  .duration-300 { transition-duration: 300ms; }
+  .ease-in-out { transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1); }
+
+  /* This is the media query that makes it responsive */
+  /* It applies to screens 768px wide or larger (desktop) */
+  @media (min-width: 768px) {
+      .md\:hidden {
+          display: none;
+      }
+      .md\:relative {
+          position: relative;
+      }
+      .md\:translate-x-0 {
+          transform: translateX(0);
+      }
+      .md\:flex {
+          display: flex;
+      }
+  }
+
+
+
         menu,
         ol,
         ul {

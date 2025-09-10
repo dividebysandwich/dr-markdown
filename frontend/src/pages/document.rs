@@ -76,61 +76,59 @@ pub fn DocumentPage() -> impl IntoView {
         }
     });
 
-    view! {
-        <div class="min-h-screen bg-gray-50">
-            <Show when=move || auth.state.get().loading>
-                <div class="min-h-screen flex items-center justify-center">
-                    <div class="text-lg">"Loading..."</div>
-                </div>
-            </Show>
+    // Add sidebar_open signal
+    let (sidebar_open, set_sidebar_open) = signal(false);
 
-            <Show
-                when=move || !auth.state.get().loading && loading.get()
-                fallback=move || view! {
-                    <Show
-                        when=move || document_and_client.get().is_some()
-                        fallback=move || view! {
-                            <div class="min-h-screen flex items-center justify-center">
-                                <div class="text-center">
-                                    <h1 class="text-2xl font-bold text-gray-900 mb-4">"Document not found"</h1>
-                                    {move || error.get().map(|err| view! {
-                                        <p class="text-red-600 mb-4">{err}</p>
-                                    })}
-                                    <A href=format!("{}/", APP_BASE) prop:class="text-blue-600 hover:text-blue-800 underline">
-                                        "Go back home"
-                                    </A>
-                                </div>
+    view! {
+        <Show when=move || auth.state.get().loading>
+            <div class="flex items-center justify-center h-full">
+                <div class="text-lg">"Loading..."</div>
+            </div>
+        </Show>
+
+        <Show
+            when=move || !auth.state.get().loading && loading.get()
+            fallback=move || view! {
+                <Show
+                    when=move || document_and_client.get().is_some()
+                    fallback=move || view! {
+                        <div class="flex items-center justify-center h-full">
+                            <div class="text-center">
+                                <h1 class="text-2xl font-bold text-gray-900 dark:text-gray-50 mb-4">"Document not found"</h1>
+                                {move || error.get().map(|err| view! {
+                                    <p class="text-red-600 mb-4">{err}</p>
+                                })}
+                                <A href=format!("{}/", APP_BASE) prop:class="text-blue-600 hover:text-blue-800 underline">
+                                    "Go back home"
+                                </A>
                             </div>
+                        </div>
+                    }
+                >
+                    {move || document_and_client.get().map(|(client, doc)| {
+                        view! {
+                            <crate::pages::home::DocumentEditor
+                                document={doc.clone()}
+                                on_save=move |updated_doc| {
+                                    set_document_and_client.update(|current| {
+                                        if let Some((_, ref mut current_doc)) = current {
+                                            *current_doc = updated_doc;
+                                        }
+                                    });
+                                }
+                                on_delete=move |_| {
+                                    set_delete_trigger.set(());
+                                }
+                                client={client.clone()}
+                            />
                         }
-                    >
-                        {move || document_and_client.get().map(|(client, doc)| {
-                            let memo_doc = Memo::new(move |_| doc.clone());
-                            let memo_client = Memo::new(move |_| client.clone());
-                            
-                            view! {
-                                <crate::pages::home::DocumentEditor
-                                    document={memo_doc.get()}
-                                    on_save=move |updated_doc| {
-                                        set_document_and_client.update(|current| {
-                                            if let Some((_, ref mut current_doc)) = current {
-                                                *current_doc = updated_doc;
-                                            }
-                                        });
-                                    }
-                                    on_delete=move |_| {
-                                        set_delete_trigger.set(());
-                                    }
-                                    client={memo_client.get()}
-                                />
-                            }
-                        })}
-                    </Show>
-                }
-            >
-                <div class="min-h-screen flex items-center justify-center">
-                    <div class="text-lg">"Loading document..."</div>
-                </div>
-            </Show>
-        </div>
+                    })}
+                </Show>
+            }
+        >
+            <div class="flex items-center justify-center h-full">
+                <div class="text-lg">"Loading document..."</div>
+            </div>
+        </Show>
     }
 }
