@@ -1,7 +1,6 @@
 use gloo_net::http::{RequestBuilder, Response};
 use serde::de::DeserializeOwned;
 use serde::Serialize;
-use serde::Deserialize;
 use uuid::Uuid;
 
 use crate::models::*;

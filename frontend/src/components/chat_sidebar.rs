@@ -67,7 +67,7 @@ pub fn ChatSidebar() -> impl IntoView {
                                     if let Ok(parsed) = serde_json::from_str::<OllamaStreamResponse>(line) {
                                         messages.update(|msgs| {
                                             if let Some(last_msg) = msgs.last_mut() {
-                                                last_msg.text.push_str(&parsed.response);
+                                                last_msg.text.push_str(&parsed.response.replace("\n", "<br/>"));
                                             }
                                         });
                                     }
@@ -103,8 +103,19 @@ pub fn ChatSidebar() -> impl IntoView {
             fixed inset-y-0 right-0 z-50 transform {} transition-transform duration-300 ease-in-out",
             if chat_sidebar.0.get() { "right-0" } else { "-right-80" }
         )>
-            <header class="p-4 border-b border-gray-200 dark:border-gray-700">
+            <header class="p-4 border-b border-gray-200 dark:border-gray-700 flex items-center justify-between">
+                
+                <button
+                    class="p-1 rounded-md hover:bg-gray-100 dark:hover:bg-gray-700"
+                    on:click=move |_| chat_sidebar.0.set(false)
+                    title="Close Assistant"
+                >
+                    <svg class="w-5 h-5 text-gray-500 dark:text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                    </svg>
+                </button>
                 <h2 class="text-xl font-semibold text-gray-800 dark:text-gray-100">AI Assistant</h2>
+                <div class="w-5 h-5"></div>
             </header>
             
             <div class="flex-1 overflow-y-auto p-4 space-y-4">
@@ -121,7 +132,7 @@ pub fn ChatSidebar() -> impl IntoView {
                                      class:bg-gray-200=move || !is_user.get()
                                      class:dark:bg-gray-700=move || !is_user.get()
                                 >
-                                    {msg.text}
+                                    <div inner_html={msg.text}></div>
                                 </div>
                             </div>
                         }

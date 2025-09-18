@@ -28,13 +28,6 @@ struct OllamaRequest {
     stream: bool,
 }
 
-// The response we expect from Ollama
-#[derive(Deserialize)]
-pub struct OllamaResponse {
-    pub response: String,
-    pub done: bool,
-}
-
 pub async fn ollama_chat_handler(
     State(_state): State<AppState>, // Assuming you have AppState
     Json(payload): Json<ChatApiRequest>,
