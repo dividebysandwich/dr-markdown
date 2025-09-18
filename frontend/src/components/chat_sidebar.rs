@@ -21,7 +21,6 @@ pub fn ChatSidebar() -> impl IntoView {
     let user_input = RwSignal::new(String::new());
     let is_thinking = RwSignal::new(false);
 
-    // --- FIX #1: Replace `Action` with a manual "trigger" signal ---
     // This signal will hold the data needed for the async task.
     let send_trigger = RwSignal::new(None::<(String, String)>);
 
