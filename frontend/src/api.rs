@@ -207,7 +207,7 @@ impl ApiClient {
         };
 
         let request = self
-            .build_request("POST", "/api/ai/chat")
+            .build_request("POST", "/llm")
             .json(&request_body)
             .map_err(|e| ApiError {
                 error: format!("Serialization error: {}", e),
@@ -224,9 +224,12 @@ impl ApiClient {
             })?;
             Ok(chat_response.reply)
         } else {
-            // Handle non-success statuses if needed, or create a more robust handler
+            // Get error string from returned json
+            let reason = response.json::<ApiError>().await.unwrap_or(ApiError {
+                error: "Unknown error".to_string(),
+            });
             Err(ApiError {
-                error: format!("API returned an error: {}", response.status()),
+                error: format!("AI Error: {}", reason.error),
             })
         }
     }

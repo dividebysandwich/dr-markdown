@@ -9,7 +9,9 @@ use serde_json::json;
 
 use crate::{
     AppState,
-    handlers::AppError
+    handlers::AppError,
+    OLLAMA_ADDR,
+    OLLAMA_MODEL,
 };
 
 // What the frontend will send to our backend
@@ -38,7 +40,6 @@ pub async fn ollama_chat_handler(
     State(_state): State<AppState>, // Assuming you have AppState
     Json(payload): Json<ChatApiRequest>,
 ) -> Result<impl IntoResponse, AppError> {
-    let ollama_url = "http://localhost:11434/api/generate";
 
     // Construct a detailed prompt for the LLM
     let prompt = format!(
@@ -48,22 +49,24 @@ pub async fn ollama_chat_handler(
     );
 
     let ollama_request = OllamaRequest {
-        model: "llama3".to_string(), // Or whatever model you prefer
+        model: OLLAMA_MODEL.to_string(),
         prompt,
         stream: false,
     };
+    println!("Ollama Request Prompt: {}", ollama_request.prompt);
 
     let client = reqwest::Client::new();
-    let res = client.post(ollama_url)
+    let res = client.post(format!("{}/api/generate", OLLAMA_ADDR))
+        .header("Content-Type", "application/json")
         .json(&ollama_request)
         .send()
         .await
-        .map_err(|_e| AppError::Llm)?;
+        .map_err(|_e| AppError::Llm("Failed to send request to LLM".into()))?;
 
     if res.status().is_success() {
-        let ollama_response = res.json::<OllamaResponse>().await.map_err(|_| AppError::Llm)?;
+        let ollama_response = res.json::<OllamaResponse>().await.map_err(|_| AppError::Llm("Failed to parse LLM response".into()))?;
         Ok(Json(json!({ "reply": ollama_response.response })))
     } else {
-        Err(AppError::Llm)
+        Err(AppError::Llm(format!("LLM request failed: {}", res.status())))
     }
 }

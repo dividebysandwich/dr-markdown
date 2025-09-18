@@ -31,6 +31,17 @@ const SERVER_ADDR: &str = match option_env!("SERVER_ADDR") {
     None => "127.0.0.1",
 };
 
+const OLLAMA_ADDR: &str = match option_env!("OLLAMA_ADDR") {
+    Some(addr) => addr,
+    None => "http://localhost:11434",
+};
+
+const OLLAMA_MODEL: &str = match option_env!("OLLAMA_MODEL") {
+    Some(model) => model,
+    None => "llama3.2",
+};
+
+
 fn get_server_port() -> u16 {
     match option_env!("SERVER_PORT") {
         Some(port) => port.parse().unwrap_or(3001),

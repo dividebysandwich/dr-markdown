@@ -8,7 +8,7 @@ use std::sync::Arc;
 use crate::{
     api::ApiClient,
     auth::use_auth,
-    components::{DocumentSidebar, ChatSidebar},
+    components::DocumentSidebar,
     models::{Document, DocumentSummary},
     app::{THEME_LIGHT, THEME_DARK, use_chat_sidebar, EditorContext},
 };
@@ -340,6 +340,5 @@ pub fn DocumentEditor(
                 </Show>
             </div>
         </div>
-        <ChatSidebar />
     }
 }

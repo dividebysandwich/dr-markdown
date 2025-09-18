@@ -1,5 +1,3 @@
-// In frontend/src/components/chat_sidebar.rs
-
 use leptos::*;
 use leptos::prelude::*;
 use leptos::task::spawn_local;
@@ -15,7 +13,7 @@ struct ChatMessage {
 
 #[component]
 pub fn ChatSidebar() -> impl IntoView {
-    let sidebar = use_chat_sidebar();
+    let chat_sidebar = use_chat_sidebar();
     let editor = use_editor();
     let auth = use_auth();
 
@@ -71,9 +69,9 @@ pub fn ChatSidebar() -> impl IntoView {
 
     view! {
         <aside class=move || format!(
-            "w-96 bg-white dark:bg-gray-900 border-l border-gray-200 dark:border-gray-700 flex flex-col \
-            fixed inset-y-0 right-0 z-30 transform {} transition-transform duration-300 ease-in-out",
-            if sidebar.0.get() { "translate-x-0" } else { "translate-x-full" }
+            "w-80 bg-white dark:bg-gray-900 border-l border-gray-200 dark:border-gray-700 flex flex-col \
+            fixed inset-y-0 right-0 z-50 transform {} transition-transform duration-300 ease-in-out",
+            if chat_sidebar.0.get() { "right-0" } else { "-right-80" }
         )>
             <header class="p-4 border-b border-gray-200 dark:border-gray-700">
                 <h2 class="text-xl font-semibold text-gray-800 dark:text-gray-100">AI Assistant</h2>
