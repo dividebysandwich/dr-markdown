@@ -4,6 +4,7 @@ mod database;
 mod handlers;
 mod models;
 mod routes;
+mod llm;
 
 use anyhow::Result;
 use axum::Router;

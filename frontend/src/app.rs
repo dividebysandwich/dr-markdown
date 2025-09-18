@@ -7,7 +7,6 @@ use web_sys::window; // Using your version that compiles
 use crate::{
     auth::{AuthProvider, use_auth},
     pages::{DocumentPage, HomePage, LoginPage, RegisterPage},
-    components::DocumentSidebar,
 };
 
 pub const APP_BASE: &str = match option_env!("LEPTOS_APP_BASE_PATH") {
@@ -25,6 +24,20 @@ pub struct SidebarContext(pub RwSignal<bool>);
 // A helper function to easily access the context
 pub fn use_sidebar() -> SidebarContext {
     use_context::<SidebarContext>().expect("SidebarContext not found")
+}
+
+// Context for the editor content (document body)
+#[derive(Clone, Copy)]
+pub struct EditorContext(pub RwSignal<String>);
+pub fn use_editor() -> EditorContext {
+    use_context::<EditorContext>().expect("EditorContext not found")
+}
+
+// Context for the LLM chat sidebar visibility
+#[derive(Clone, Copy)]
+pub struct ChatSidebarContext(pub RwSignal<bool>);
+pub fn use_chat_sidebar() -> ChatSidebarContext {
+    use_context::<ChatSidebarContext>().expect("ChatSidebarContext not found")
 }
 
 // App's only job is to create the providers.

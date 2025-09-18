@@ -209,6 +209,8 @@ pub enum AppError {
     #[error("User not found")]
     UserNotFound,
     #[error("Document not found")]
+    Llm,
+    #[error("Error communicating with LLM:")]
     DocumentNotFound,
     #[error("Registration is disabled")]
     RegistrationDisabled,
@@ -224,6 +226,7 @@ impl IntoResponse for AppError {
             AppError::InvalidCredentials => StatusCode::UNAUTHORIZED,
             AppError::UserNotFound => StatusCode::NOT_FOUND,
             AppError::DocumentNotFound => StatusCode::NOT_FOUND,
+            AppError::Llm => StatusCode::BAD_GATEWAY,
             AppError::RegistrationDisabled => StatusCode::FORBIDDEN,
         };
 

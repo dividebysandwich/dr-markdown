@@ -8,9 +8,9 @@ use std::sync::Arc;
 use crate::{
     api::ApiClient,
     auth::use_auth,
-    components::DocumentSidebar,
+    components::{DocumentSidebar, ChatSidebar},
     models::{Document, DocumentSummary},
-    app::{THEME_LIGHT, THEME_DARK, use_sidebar},
+    app::{THEME_LIGHT, THEME_DARK, use_chat_sidebar, EditorContext},
 };
 
 #[component]
@@ -26,7 +26,7 @@ pub fn HomePage() -> impl IntoView {
     });
 
     // Signal for mobile sidebar
-    let sidebar_open = create_rw_signal(false);
+    let sidebar_open = RwSignal::new(false);
 
     view! {
         <Show
@@ -193,12 +193,16 @@ pub fn DocumentEditor(
     on_delete: impl Fn(Uuid) + 'static + Clone,
     client: Arc<ApiClient>,
 ) -> impl IntoView {
-    let sidebar = use_sidebar();
-    let (content, set_content) = signal(document.content.clone());
+
+    let content = RwSignal::new(document.content.clone());
+
     let (title, set_title) = signal(document.title.clone());
     let (is_editing, set_is_editing) = signal(false);
     let (saving, set_saving) = signal(false);
     let (show_confirm_dialog, set_show_confirm_dialog) = signal(false);
+
+    provide_context(EditorContext(content));
+    let chat_sidebar = use_chat_sidebar();
 
     let client_save = client.clone();
     let doc_id = document.id;
@@ -259,6 +263,15 @@ pub fn DocumentEditor(
                     />
                 </div>
                 <div class="flex items-center space-x-3">
+                    <button
+                        class="p-2 rounded-md hover:bg-gray-100 dark:hover:bg-gray-700"
+                        on:click=move |_| chat_sidebar.0.update(|open| *open = !*open)
+                    >
+                        // A "sparkles" icon for AI
+                        <svg class="w-5 h-5 text-gray-500 dark:text-gray-400" viewBox="0 0 20 20" fill="currentColor">
+                            <path fill-rule="evenodd" d="M10 3a.75.75 0 01.75.75v1.5a.75.75 0 01-1.5 0v-1.5A.75.75 0 0110 3zM13.25 3.843a.75.75 0 01.975 1.299l-1.06 1.06a.75.75 0 01-1.06-1.06l1.06-1.06a.75.75 0 01.085-.239zM5.682 5.142a.75.75 0 011.06 1.06l-1.06 1.06a.75.75 0 01-1.299-.975l1.06-1.06a.75.75 0 01.239-.085zM16.157 6.75a.75.75 0 011.299.975l-1.06 1.06a.75.75 0 11-1.06-1.06l1.06-1.06zM10 15.5a.75.75 0 01.75.75v1.5a.75.75 0 01-1.5 0v-1.5a.75.75 0 01.75-.75zM3.843 13.25a.75.75 0 01.975-1.299l1.06 1.06a.75.75 0 11-1.06 1.06l-1.06-1.06a.75.75 0 01.085-.239zM14.318 14.858a.75.75 0 011.06-1.06l1.06 1.06a.75.75 0 01-1.299.975l-1.06-1.06a.75.75 0 01.239-.085zM6.75 16.157a.75.75 0 011.299-.975l-1.06-1.06a.75.75 0 11-1.06 1.06l1.06 1.06zM10 6.5a3.5 3.5 0 100 7 3.5 3.5 0 000-7zM8.5 10a1.5 1.5 0 113 0 1.5 1.5 0 01-3 0z" clip-rule="evenodd"/>
+                        </svg>
+                    </button>
                     <button
                         class="px-4 py-2 text-sm font-medium text-gray-700 bg-gray-100 border border-gray-300 rounded-md hover:bg-gray-200 focus:outline-none focus:ring-2 focus:ring-blue-500"
                         on:click=move |_| set_is_editing.update(|editing| *editing = !*editing)
@@ -321,11 +334,12 @@ pub fn DocumentEditor(
                     <textarea
                         class="w-full h-full p-6 border-none outline-none resize-none font-mono text-sm"
                         prop:value=content
-                        on:input=move |ev| set_content.set(event_target_value(&ev))
+                        on:input=move |ev| content.set(event_target_value(&ev))
                         placeholder="Start writing your markdown..."
                     ></textarea>
                 </Show>
             </div>
         </div>
+        <ChatSidebar />
     }
 }

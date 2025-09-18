@@ -3,7 +3,7 @@ use axum::{
     Router,
 };
 
-use crate::{handlers, AppState};
+use crate::{handlers, AppState, llm};
 
 pub fn create_routes() -> Router<AppState> {
     Router::new()
@@ -16,4 +16,5 @@ pub fn create_routes() -> Router<AppState> {
         .route("/documents/{id}", get(handlers::get_document))
         .route("/documents/{id}", put(handlers::update_document))
         .route("/documents/{id}", delete(handlers::delete_document))
+        .route("/llm", post(llm::ollama_chat_handler))
 }
