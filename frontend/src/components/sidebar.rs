@@ -17,9 +17,6 @@ pub fn DocumentSidebar(
 ) -> impl IntoView {
     let sidebar = use_sidebar();
 
-    // Create a closure to close the sidebar on mobile after an action
-    let close_sidebar = move || sidebar.0.set(false);
-
     let (new_doc_title, set_new_doc_title) = signal(String::new());
     let (show_create_form, set_show_create_form) = signal(false);
 

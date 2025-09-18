@@ -19,6 +19,7 @@ A full-stack Rust application for online editing of markdown documents, featurin
 - **Mobile Friendly**: Dynamic sidebar for good usability on desktop and mobile
 - **Configurable Registration**: Option to disable new user registration
 - **Markdown Rendering**: Full markdown support with syntax highlighting
+- **AI Integration**: Ask a local Ollama server for suggestions about your current document
 
 ## Architecture
 
@@ -26,6 +27,7 @@ A full-stack Rust application for online editing of markdown documents, featurin
 - **Frontend**: Leptos WebAssembly application
 - **Authentication**: JWT-based with bcrypt password hashing
 - **Database**: SQLite with SQLx migrations
+- **AI**: Ollama via REST API
 
 ## Prerequisites
 
@@ -78,6 +80,8 @@ The application can be configured via environment variables:
 - `ALLOW_REGISTRATION`: Allow new user registration (default: true)
 - `LEPTOS_APP_BASE_PATH`: Base path of the application (default: ``)
 - `API_URL`: Address the frontend uses to reach the backend (default: `http://localhost:3001/api`)
+- `OLLAMA_ADDR`: Address to a (local or remote) Ollama instance (default: `http://localhost:11434`)
+- `OLLAMA_MODEL`: The model to use (default: `llama3.2`)
 
 ## API Endpoints
 
@@ -92,6 +96,7 @@ The application can be configured via environment variables:
 - `GET /api/documents/:id` - Get document by ID
 - `PUT /api/documents/:id` - Update document
 - `DELETE /api/documents/:id` - Delete document
+- `POST /api/llm` - Post document context and user question to the configured Ollama server
 
 ## Development
 
@@ -133,39 +138,41 @@ Migrations are automatically applied when the backend starts. Migration files ar
 
 ```
 markdown-editor/
-├── Cargo.toml              # Workspace configuration
-├── .env.example            # Environment variables template
-├── README.md               # This file
-├── backend/                # REST API backend
-│   ├── Cargo.toml          # Backend dependencies
+├── Cargo.toml                   # Workspace configuration
+├── .env.example                 # Environment variables template
+├── README.md                    # This file
+├── backend/                     # REST API backend
+│   ├── Cargo.toml               # Backend dependencies
 │   ├── src/
-│   │   ├── main.rs         # Application entry point
-│   │   ├── auth.rs         # Authentication logic
-│   │   ├── config.rs       # Configuration management
-│   │   ├── database.rs     # Database operations
-│   │   ├── handlers.rs     # HTTP request handlers
-│   │   ├── models.rs       # Data models
-│   │   └── routes.rs       # Route definitions
-│   └── migrations/         # Database migrations
-│       └── 001_initial.sql # Initial schema
-└── frontend/               # Leptos web frontend
-    ├── Cargo.toml          # Frontend dependencies
-    ├── index.html          # HTML template
+│   │   ├── main.rs              # Application entry point
+│   │   ├── auth.rs              # Authentication logic
+│   │   ├── config.rs            # Configuration management
+│   │   ├── database.rs          # Database operations
+│   │   ├── handlers.rs          # HTTP request handlers
+│   │   ├── llm.rs               # Ollama processing and forwarding
+│   │   ├── models.rs            # Data models
+│   │   └── routes.rs            # Route definitions
+│   └── migrations/              # Database migrations
+│       └── 001_initial.sql      # Initial schema
+└── frontend/                    # Leptos web frontend
+    ├── Cargo.toml               # Frontend dependencies
+    ├── index.html               # HTML template
     └── src/
-        ├── main.rs         # Frontend entry point
-        ├── app.rs          # Main app component
-        ├── api.rs          # API client
-        ├── auth.rs         # Authentication context
-        ├── models.rs       # Frontend data models
-        ├── components/     # Reusable components
+        ├── main.rs              # Frontend entry point
+        ├── app.rs               # Main app component
+        ├── api.rs               # API client
+        ├── auth.rs              # Authentication context
+        ├── models.rs            # Frontend data models
+        ├── components/          # Reusable components
+        │   └── chat_sidebar.rs  # AI Chat sidebar
         │   ├── mod.rs
-        │   └── sidebar.rs  # Document sidebar
-        └── pages/          # Page components
+        │   └── sidebar.rs       # Document sidebar
+        └── pages/               # Page components
             ├── mod.rs
-            ├── home.rs     # Home page with editor
-            ├── login.rs    # Login page
-            ├── register.rs # Registration page
-            └── document.rs # Document view page
+            ├── home.rs          # Home page with editor
+            ├── login.rs         # Login page
+            ├── register.rs      # Registration page
+            └── document.rs      # Document view page
 ```
 
 ## Security Considerations
@@ -184,6 +191,11 @@ To prevent new users from registering, set the environment variable:
 ```bash
 ALLOW_REGISTRATION=false
 ```
+
+### AI Assistant
+
+You can use a local Ollama server to help you with writing and analyze documents.
+Just install ollama, download a model like ```llama3.2``` and configure ```OLLAMA_ADDR``` and ```OLLAMA_MODEL```
 
 ### Markdown Styling
 

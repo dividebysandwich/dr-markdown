@@ -7,7 +7,7 @@ use web_sys::window; // Using your version that compiles
 use crate::{
     auth::{AuthProvider, use_auth},
     pages::{DocumentPage, HomePage, LoginPage, RegisterPage},
-    components::DocumentSidebar,
+    components::ChatSidebar
 };
 
 pub const APP_BASE: &str = match option_env!("LEPTOS_APP_BASE_PATH") {
@@ -21,10 +21,22 @@ pub const THEME_DARK: &str = "dark";
 // Define a context type to hold the sidebar signal
 #[derive(Clone, Copy)]
 pub struct SidebarContext(pub RwSignal<bool>);
-
-// A helper function to easily access the context
 pub fn use_sidebar() -> SidebarContext {
     use_context::<SidebarContext>().expect("SidebarContext not found")
+}
+
+// Context for the editor content (document body)
+#[derive(Clone, Copy)]
+pub struct EditorContext(pub RwSignal<String>);
+pub fn use_editor() -> EditorContext {
+    use_context::<EditorContext>().expect("EditorContext not found")
+}
+
+// Context for the LLM chat sidebar visibility
+#[derive(Clone, Copy)]
+pub struct ChatSidebarContext(pub RwSignal<bool>);
+pub fn use_chat_sidebar() -> ChatSidebarContext {
+    use_context::<ChatSidebarContext>().expect("ChatSidebarContext not found")
 }
 
 // App's only job is to create the providers.
@@ -45,8 +57,13 @@ fn AppLayout() -> impl IntoView {
     let auth = use_auth();
 
     let sidebar_open = RwSignal::new(false);
-    // Provide it to all children
     provide_context(SidebarContext(sidebar_open));
+
+    let chat_sidebar_open = RwSignal::new(false);
+    provide_context(ChatSidebarContext(chat_sidebar_open));
+
+    let editor_open = RwSignal::new(String::new());
+    provide_context(EditorContext(editor_open));
 
     // This Effect now has access to `auth` and will work correctly.
     Effect::new(move |_| {
@@ -101,6 +118,7 @@ fn AppLayout() -> impl IntoView {
                 </Router>
             </main>
         </div>
+        <ChatSidebar />
     }
 }
 

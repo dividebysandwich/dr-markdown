@@ -1,5 +1,7 @@
 use gloo_net::http::{RequestBuilder, Response}; // Import Response
 use serde::de::DeserializeOwned;
+use serde::Serialize;
+use serde::Deserialize;
 use uuid::Uuid;
 
 use crate::models::*;
@@ -12,6 +14,17 @@ pub const API_URL: &str = match option_env!("API_URL") {
 #[derive(Debug, PartialEq)]
 pub struct ApiClient {
     token: Option<String>,
+}
+
+#[derive(Serialize)]
+struct ChatApiRequest {
+    context: String,
+    message: String,
+}
+
+#[derive(Deserialize)]
+struct ChatApiResponse {
+    reply: String,
 }
 
 async fn handle_response<T: DeserializeOwned>(response: Response) -> Result<T, ApiError> {
@@ -184,6 +197,40 @@ impl ApiClient {
                 error: format!("API error: {}", response.status_text()),
             });
             Err(error)
+        }
+    }
+
+    pub async fn ollama_chat(&self, context: &str, message: &str) -> Result<String, ApiError> {
+        let request_body = ChatApiRequest {
+            context: context.to_string(),
+            message: message.to_string(),
+        };
+
+        let request = self
+            .build_request("POST", "/llm")
+            .json(&request_body)
+            .map_err(|e| ApiError {
+                error: format!("Serialization error: {}", e),
+            })?;
+
+        let response = request.send().await.map_err(|e| ApiError {
+            error: format!("Network error: {}", e),
+        })?;
+
+        // `handle_response` is generic, so we parse the specific JSON structure here.
+        if response.ok() {
+            let chat_response: ChatApiResponse = response.json().await.map_err(|e| ApiError {
+                error: format!("Deserialization error: {}", e),
+            })?;
+            Ok(chat_response.reply)
+        } else {
+            // Get error string from returned json
+            let reason = response.json::<ApiError>().await.unwrap_or(ApiError {
+                error: "Unknown error".to_string(),
+            });
+            Err(ApiError {
+                error: format!("AI Error: {}", reason.error),
+            })
         }
     }
 }

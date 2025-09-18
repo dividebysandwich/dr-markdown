@@ -76,9 +76,6 @@ pub fn DocumentPage() -> impl IntoView {
         }
     });
 
-    // Add sidebar_open signal
-    let (sidebar_open, set_sidebar_open) = signal(false);
-
     view! {
         <Show when=move || auth.state.get().loading>
             <div class="flex items-center justify-center h-full">

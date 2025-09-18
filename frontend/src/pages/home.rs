@@ -10,7 +10,7 @@ use crate::{
     auth::use_auth,
     components::DocumentSidebar,
     models::{Document, DocumentSummary},
-    app::{THEME_LIGHT, THEME_DARK, use_sidebar},
+    app::{THEME_LIGHT, THEME_DARK, use_chat_sidebar, EditorContext, use_editor},
 };
 
 #[component]
@@ -26,7 +26,7 @@ pub fn HomePage() -> impl IntoView {
     });
 
     // Signal for mobile sidebar
-    let sidebar_open = create_rw_signal(false);
+    let sidebar_open = RwSignal::new(false);
 
     view! {
         <Show
@@ -193,12 +193,19 @@ pub fn DocumentEditor(
     on_delete: impl Fn(Uuid) + 'static + Clone,
     client: Arc<ApiClient>,
 ) -> impl IntoView {
-    let sidebar = use_sidebar();
-    let (content, set_content) = signal(document.content.clone());
+
+    let editor_context = use_editor();
+    let content = editor_context.0;
+    content.set(document.content.clone()); // Set initial value
+
     let (title, set_title) = signal(document.title.clone());
     let (is_editing, set_is_editing) = signal(false);
     let (saving, set_saving) = signal(false);
     let (show_confirm_dialog, set_show_confirm_dialog) = signal(false);
+    let (is_chat_sidebar, set_is_chat_sidebar) = signal(false);
+
+    provide_context(EditorContext(content));
+    let chat_sidebar = use_chat_sidebar();
 
     let client_save = client.clone();
     let doc_id = document.id;
@@ -261,6 +268,12 @@ pub fn DocumentEditor(
                 <div class="flex items-center space-x-3">
                     <button
                         class="px-4 py-2 text-sm font-medium text-gray-700 bg-gray-100 border border-gray-300 rounded-md hover:bg-gray-200 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        on:click=move |_| { chat_sidebar.0.update(|open| *open = !*open); set_is_chat_sidebar.update(|open| *open = !*open); }
+                    >
+                        {move || if is_chat_sidebar.get() { "Close AI" } else { "AI Chat" }}
+                    </button>
+                    <button
+                        class="px-4 py-2 text-sm font-medium text-gray-700 bg-gray-100 border border-gray-300 rounded-md hover:bg-gray-200 focus:outline-none focus:ring-2 focus:ring-blue-500"
                         on:click=move |_| set_is_editing.update(|editing| *editing = !*editing)
                     >
                         {move || if is_editing.get() { "Preview" } else { "Edit" }}
@@ -321,7 +334,7 @@ pub fn DocumentEditor(
                     <textarea
                         class="w-full h-full p-6 border-none outline-none resize-none font-mono text-sm"
                         prop:value=content
-                        on:input=move |ev| set_content.set(event_target_value(&ev))
+                        on:input=move |ev| content.set(event_target_value(&ev))
                         placeholder="Start writing your markdown..."
                     ></textarea>
                 </Show>
