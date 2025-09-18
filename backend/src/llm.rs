@@ -65,6 +65,8 @@ pub async fn ollama_chat_handler(
     // Set the content type for a streaming response
     let headers = [
         (axum::http::header::CONTENT_TYPE, "text/event-stream"),
+        (axum::http::header::CACHE_CONTROL, "no-cache"),
+        (axum::http::header::HeaderName::from_static("x-accel-buffering"), "no"),
     ];
 
     Ok((headers, body))
