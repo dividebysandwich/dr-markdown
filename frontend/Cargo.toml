@@ -24,13 +24,17 @@ chrono = { workspace = true }
 markdown-it = "0.6"
 
 # Web APIs
-web-sys = "0.3"
-wasm-bindgen = "0.2"
+web-sys = { version = "0.3", features = ["Request", "RequestInit", "TextDecoder"] }
+wasm-bindgen = { version = "0.2" }
+wasm-streams = "0.4"
 console_error_panic_hook = "0.1"
 
 # Local storage
 gloo-storage = "0.3"
 leptos_meta = "0.8.5"
+wasm-bindgen-futures = "0.4.53"
+futures = "0.3"
+js-sys = "0.3"
 
 [profile.release]
 opt-level = 'z'

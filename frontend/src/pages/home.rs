@@ -202,7 +202,6 @@ pub fn DocumentEditor(
     let (is_editing, set_is_editing) = signal(false);
     let (saving, set_saving) = signal(false);
     let (show_confirm_dialog, set_show_confirm_dialog) = signal(false);
-    let (is_chat_sidebar, set_is_chat_sidebar) = signal(false);
 
     provide_context(EditorContext(content));
     let chat_sidebar = use_chat_sidebar();
@@ -268,9 +267,9 @@ pub fn DocumentEditor(
                 <div class="flex items-center space-x-3">
                     <button
                         class="px-4 py-2 text-sm font-medium text-gray-700 bg-gray-100 border border-gray-300 rounded-md hover:bg-gray-200 focus:outline-none focus:ring-2 focus:ring-blue-500"
-                        on:click=move |_| { chat_sidebar.0.update(|open| *open = !*open); set_is_chat_sidebar.update(|open| *open = !*open); }
+                        on:click=move |_| { chat_sidebar.0.update(|open| *open = !*open) }
                     >
-                        {move || if is_chat_sidebar.get() { "Close AI" } else { "AI Chat" }}
+                        {move || if chat_sidebar.0.get() { "Close AI" } else { "AI Chat" }}
                     </button>
                     <button
                         class="px-4 py-2 text-sm font-medium text-gray-700 bg-gray-100 border border-gray-300 rounded-md hover:bg-gray-200 focus:outline-none focus:ring-2 focus:ring-blue-500"

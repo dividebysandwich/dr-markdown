@@ -3,9 +3,8 @@ use serde::{Deserialize, Serialize};
 use axum::{
     extract::State,
     response::IntoResponse,
-    Json,
+    Json, body::Body
 };
-use serde_json::json;
 
 use crate::{
     AppState,
@@ -29,13 +28,6 @@ struct OllamaRequest {
     stream: bool,
 }
 
-// The response we expect from Ollama
-#[derive(Deserialize)]
-pub struct OllamaResponse {
-    pub response: String,
-    // ... other fields we can ignore
-}
-
 pub async fn ollama_chat_handler(
     State(_state): State<AppState>, // Assuming you have AppState
     Json(payload): Json<ChatApiRequest>,
@@ -51,7 +43,7 @@ pub async fn ollama_chat_handler(
     let ollama_request = OllamaRequest {
         model: OLLAMA_MODEL.to_string(),
         prompt,
-        stream: false,
+        stream: true,
     };
     println!("Ollama Request Prompt: {}", ollama_request.prompt);
 
@@ -63,10 +55,18 @@ pub async fn ollama_chat_handler(
         .await
         .map_err(|_e| AppError::Llm("Failed to send request to LLM".into()))?;
 
-    if res.status().is_success() {
-        let ollama_response = res.json::<OllamaResponse>().await.map_err(|_| AppError::Llm("Failed to parse LLM response".into()))?;
-        Ok(Json(json!({ "reply": ollama_response.response })))
-    } else {
-        Err(AppError::Llm(format!("LLM request failed: {}", res.status())))
-    }
+
+    // Get the response body as a stream of bytes
+    let stream = res.bytes_stream();
+
+    // Create a streaming body for the Axum response
+    let body = Body::from_stream(stream);
+
+    // Set the content type for a streaming response
+    let headers = [
+        (axum::http::header::CONTENT_TYPE, "text/event-stream"),
+    ];
+
+    Ok((headers, body))
+
 }
