@@ -99,11 +99,11 @@ pub fn ChatSidebar() -> impl IntoView {
     };
     view! {
         <aside class=move || format!(
-            "w-80 bg-white dark:bg-gray-900 border-l border-gray-200 dark:border-gray-700 flex flex-col \
+            "chat-sidebar w-80 bg-white dark:bg-gray-900 border-l border-gray-200 dark:border-gray-700 flex flex-col \
             fixed inset-y-0 right-0 z-50 transform {} transition-transform duration-300 ease-in-out",
             if chat_sidebar.0.get() { "right-0" } else { "-right-80" }
         )>
-            <header class="p-4 border-b border-gray-200 dark:border-gray-700 flex items-center justify-between">
+            <header class="text-xl p-4 flex items-center justify-between">
                 
                 <button
                     class="p-1 rounded-md hover:bg-gray-100 dark:hover:bg-gray-700"

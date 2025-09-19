@@ -1174,7 +1174,32 @@
       }
   }
 
-
+  .chat-sidebar {
+    background: linear-gradient(180deg, #6bf 0%, #fff 100%);
+    box-shadow: 4px 0px 15px rgba(0, 0, 0, 0.3);
+    transition-property: transform, box-shadow; 
+  }
+  html.dark .chat-sidebar {
+    background: linear-gradient(180deg, #1e3a8a 0%, #111827 100%);
+    box-shadow: 4px 0px 15px rgba(0, 0, 0, 0.3);
+  }
+.chat-sidebar .bg-blue-500 {
+    background-color: #3b82f6; /* Tailwind's blue-600 */
+    opacity: 0.8;
+}
+html.dark .chat-sidebar .bg-blue-500 {
+    opacity: 0.8;
+    background-color: #7c3aed; /* A vibrant purple for dark mode */
+}
+.chat-sidebar .bg-gray-200 {
+    background-color: #e5e7eb; /* Tailwind's gray-200 */
+    opacity: 0.8;
+}
+/* This targets the AI bubble in dark mode */
+html.dark .chat-sidebar div[class*="dark:bg-gray-700"] {
+    background-color: #4b5563; /* Tailwind's gray-600 */
+    opacity: 0.8;
+}
 
         menu,
         ol,

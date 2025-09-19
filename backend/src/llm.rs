@@ -35,7 +35,7 @@ pub async fn ollama_chat_handler(
 
     // Construct a detailed prompt for the LLM
     let prompt = format!(
-        "You are a helpful writing assistant. The user is currently editing a document with the following content:\n\n---\n{}\n---\n\nNow, please answer the user's question: {}",
+        "You are a helpful writing assistant. The user is currently editing a document with the following content:\n\n---\n{}\n---\n\nNow, please answer the user's question, and if you do propose new content for the document please use markdown syntax: {}",
         payload.context,
         payload.message
     );
@@ -65,6 +65,8 @@ pub async fn ollama_chat_handler(
     // Set the content type for a streaming response
     let headers = [
         (axum::http::header::CONTENT_TYPE, "text/event-stream"),
+        (axum::http::header::CACHE_CONTROL, "no-cache"),
+        (axum::http::header::HeaderName::from_static("x-accel-buffering"), "no"),
     ];
 
     Ok((headers, body))
