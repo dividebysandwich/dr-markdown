@@ -139,7 +139,21 @@ pub fn ChatSidebar() -> impl IntoView {
                     }
                 />
                 <Show when=move || is_thinking.get()>
-                    <p class="text-sm text-gray-500 italic">"AI is thinking..."</p>
+                    <div class="inline-block p-3 rounded-lg bg-gray-200 dark:bg-gray-700">
+                        <div class="flex items-center justify-center space-x-1">
+                            <svg fill="currentColor" width="20" height="20" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" class="text-gray-500 dark:text-gray-400">
+                                <circle cx="4" cy="12" r="3">
+                                    <animate id="a" begin="0;c.end-0.25s" attributeName="cy" dur="0.75s" values="12;6;12" fill="freeze"/>
+                                </circle>
+                                <circle cx="12" cy="12" r="3">
+                                    <animate begin="a.begin+0.15s" attributeName="cy" dur="0.75s" values="12;6;12" fill="freeze"/>
+                                </circle>
+                                <circle cx="20" cy="12" r="3">
+                                    <animate id="c" begin="a.begin+0.3s" attributeName="cy" dur="0.75s" values="12;6;12" fill="freeze"/>
+                                </circle>
+                            </svg>
+                        </div>
+                    </div>
                 </Show>
             </div>
 
