@@ -46,8 +46,8 @@ cargo install trunk wasm-pack
 
 1. **Clone and setup the workspace**:
 ```bash
-git clone <repository-url>
-cd markdown-editor
+git clone https://github.com/dividebysandwich/dr-markdown.git
+cd dr-markdown
 ```
 
 2. **Backend setup**:
@@ -139,7 +139,7 @@ Migrations are automatically applied when the backend starts. Migration files ar
 ## Project Structure
 
 ```
-markdown-editor/
+dr-markdown/
 ├── Cargo.toml                   # Workspace configuration
 ├── .env.example                 # Environment variables template
 ├── README.md                    # This file
