@@ -139,7 +139,7 @@ pub fn DocumentSidebar(
                         <div class="p-4">
                             <For
                                 each=move || documents.get()
-                                key=|doc| doc.id
+                                key=|doc| (doc.id, doc.title.clone())
                                 children=move |doc| {
                                     let close_sidebar_clone = close_sidebar.clone();
                                     let is_selected = move || {
