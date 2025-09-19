@@ -29,7 +29,7 @@ A full-stack Rust application for online editing of markdown documents, featurin
 - **Database**: SQLite with SQLx migrations
 - **AI**: Ollama via REST API
 
-<img width="633" height="623" alt="image" src="https://github.com/user-attachments/assets/13b84e05-6f91-4d40-b618-f041aeb77e49" />
+<img width="607" height="701" alt="image" src="https://github.com/user-attachments/assets/3364ec94-9c26-41d2-b50f-870de3a8cf83" />
 
 ## Prerequisites
 
