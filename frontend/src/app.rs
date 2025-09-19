@@ -53,7 +53,6 @@ pub fn App() -> impl IntoView {
 // AppLayout contains the actual UI and can safely use the contexts.
 #[component]
 fn AppLayout() -> impl IntoView {
-    // This is now SAFE because AppLayout is a child of AuthProvider.
     let auth = use_auth();
 
     let sidebar_open = RwSignal::new(false);
@@ -65,7 +64,6 @@ fn AppLayout() -> impl IntoView {
     let editor_open = RwSignal::new(String::new());
     provide_context(EditorContext(editor_open));
 
-    // This Effect now has access to `auth` and will work correctly.
     Effect::new(move |_| {
         let theme = auth.state.get().user
             .as_ref()
@@ -85,7 +83,6 @@ fn AppLayout() -> impl IntoView {
     view! {
 
         <div class="relative flex h-screen bg-gray-100 dark:bg-gray-800">
-            // The overlay can live here, as it's shared by all pages
             <Show when=move || sidebar_open.get()>
                 <div
                     class="fixed inset-0 bg-gray-900 bg-opacity-50 z-20 md:hidden"
@@ -94,7 +91,7 @@ fn AppLayout() -> impl IntoView {
             </Show>
 
             <main class="flex-1 flex flex-col overflow-hidden">
-                // --- NEW: PERSISTENT MOBILE HEADER ---
+                // persistent header with sidebar toggle for mobile
                 <header class="bg-white dark:bg-gray-900 border-b border-gray-200 dark:border-gray-700 p-4 flex items-center md:hidden">
                     <button
                         class="text-gray-500 dark:text-gray-400 focus:outline-none"
