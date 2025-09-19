@@ -15,7 +15,7 @@ A full-stack Rust application for online editing of markdown documents, featurin
 - **User Authentication**: Username/password authentication with JWT tokens
 - **Document Management**: Create, edit, rename, and delete markdown documents
 - **Real-time Preview**: Switch between edit and preview modes
-- **Responsive UI**: Clean, modern interface with document sidebar
+- **Responsive UI**: Clean, modern interface with document sidebar and dark mode
 - **Mobile Friendly**: Dynamic sidebar for good usability on desktop and mobile
 - **Configurable Registration**: Option to disable new user registration
 - **Markdown Rendering**: Full markdown support with syntax highlighting
@@ -217,7 +217,7 @@ The database schema is defined in `backend/migrations/001_initial.sql`. To modif
 
 1. **CORS Errors**: Make sure the backend is running on port 3001
 2. **WebAssembly Errors**: Ensure `wasm-pack` is installed and up to date
-3. **Database Errors**: Check that the database directory is writable
+3. **Database Errors**: Check that the database directory and file are writable, that you configured the environment variables and created the database with the ```cargo sqlx``` commands shown above
 4. **JWT Errors**: Verify the JWT secret is set correctly
 
 ### Logs
