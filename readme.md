@@ -8,7 +8,7 @@ A full-stack Rust application for online editing of markdown documents, featurin
 <br/>
 <br/>
 
-<img width="1689" height="968" alt="image" src="https://github.com/user-attachments/assets/f4abe5de-7e88-4f30-b2df-320cb8be9568" />
+<img width="1689" height="968" alt="image" src="https://github.com/user-attachments/assets/f33480af-7740-47fa-a0d0-873e812dcb7b" />
 
 ## Features
 
