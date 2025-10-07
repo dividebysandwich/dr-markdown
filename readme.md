@@ -136,47 +136,6 @@ The built frontend files will be in `frontend/dist/`.
 
 Migrations are automatically applied when the backend starts. Migration files are located in `backend/migrations/`.
 
-## Project Structure
-
-```
-dr-markdown/
-├── Cargo.toml                   # Workspace configuration
-├── .env.example                 # Environment variables template
-├── README.md                    # This file
-├── backend/                     # REST API backend
-│   ├── Cargo.toml               # Backend dependencies
-│   ├── src/
-│   │   ├── main.rs              # Application entry point
-│   │   ├── auth.rs              # Authentication logic
-│   │   ├── config.rs            # Configuration management
-│   │   ├── database.rs          # Database operations
-│   │   ├── handlers.rs          # HTTP request handlers
-│   │   ├── llm.rs               # Ollama processing and forwarding
-│   │   ├── models.rs            # Data models
-│   │   └── routes.rs            # Route definitions
-│   └── migrations/              # Database migrations
-│       └── 001_initial.sql      # Initial schema
-└── frontend/                    # Leptos web frontend
-    ├── Cargo.toml               # Frontend dependencies
-    ├── index.html               # HTML template
-    └── src/
-        ├── main.rs              # Frontend entry point
-        ├── app.rs               # Main app component
-        ├── api.rs               # API client
-        ├── auth.rs              # Authentication context
-        ├── models.rs            # Frontend data models
-        ├── components/          # Reusable components
-        │   └── chat_sidebar.rs  # AI Chat sidebar
-        │   ├── mod.rs
-        │   └── sidebar.rs       # Document sidebar
-        └── pages/               # Page components
-            ├── mod.rs
-            ├── home.rs          # Home page with editor
-            ├── login.rs         # Login page
-            ├── register.rs      # Registration page
-            └── document.rs      # Document view page
-```
-
 ## Security Considerations
 
 - **JWT Secret**: Change the default JWT secret in production
