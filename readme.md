@@ -10,6 +10,9 @@ A full-stack Rust application for online editing of markdown documents, featurin
 
 <img width="1689" height="968" alt="image" src="https://github.com/user-attachments/assets/f33480af-7740-47fa-a0d0-873e812dcb7b" />
 
+<img width="1691" height="800" alt="image" src="https://github.com/user-attachments/assets/24591a2e-3cc7-4691-ae65-eff760307ccc" />
+
+
 ## Features
 
 - **User Authentication**: Username/password authentication with JWT tokens
