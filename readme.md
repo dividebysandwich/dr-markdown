@@ -20,6 +20,7 @@ A full-stack Rust application for online editing of markdown documents, featurin
 - **Configurable Registration**: Option to disable new user registration
 - **Markdown Rendering**: Full markdown support with syntax highlighting
 - **AI Integration**: Ask a local Ollama server for suggestions about your current document
+- **Diagram support**: Write graphical sequence-, block-, mermaid-, structurizr- and other diagrams right in your documents
 
 ## Architecture
 
@@ -28,6 +29,7 @@ A full-stack Rust application for online editing of markdown documents, featurin
 - **Authentication**: JWT-based with bcrypt password hashing
 - **Database**: SQLite with SQLx migrations
 - **AI**: Ollama via REST API
+- **Diagrams**: via Kroki
 
 <img width="607" height="701" alt="image" src="https://github.com/user-attachments/assets/3364ec94-9c26-41d2-b50f-870de3a8cf83" />
 
