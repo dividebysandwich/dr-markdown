@@ -15,6 +15,11 @@ pub const APP_BASE: &str = match option_env!("LEPTOS_APP_BASE_PATH") {
     None => "",
 };
 
+pub const KROKI_URL: &str = match option_env!("KROKI_URL") {
+    Some(url) => url,
+    None => "https://kroki.io",
+};
+
 pub const THEME_LIGHT: &str = "light";
 pub const THEME_DARK: &str = "dark";
 

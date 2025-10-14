@@ -4,13 +4,17 @@ use leptos::task::spawn_local;
 use leptos_router::hooks::use_navigate;
 use uuid::Uuid;
 use std::sync::Arc;
+use flate2::write::ZlibEncoder;
+use flate2::Compression;
+use std::io::Write;
+use pulldown_cmark::{Parser, Options, Event, Tag, CodeBlockKind, TagEnd};
 
 use crate::{
     api::ApiClient,
     auth::use_auth,
     components::DocumentSidebar,
     models::{Document, DocumentSummary},
-    app::{THEME_LIGHT, THEME_DARK, use_chat_sidebar, EditorContext, use_editor},
+    app::{THEME_LIGHT, THEME_DARK, KROKI_URL, use_chat_sidebar, EditorContext, use_editor},
 };
 
 #[component]
@@ -185,6 +189,64 @@ pub fn HomePage() -> impl IntoView {
     }
 }
 
+// Helper function to create a Kroki URL
+fn generate_kroki_url(diagram_type: &str, code: &str) -> String {
+    let mut encoder = ZlibEncoder::new(Vec::new(), Compression::default());
+    encoder.write_all(code.as_bytes()).unwrap();
+    let compressed_bytes = encoder.finish().unwrap();
+    let encoded_data = base64::Engine::encode(&base64::engine::general_purpose::URL_SAFE_NO_PAD, compressed_bytes);
+    format!("{}/{}/svg/{}", KROKI_URL, diagram_type, encoded_data)
+}
+
+pub fn render_markdown(markdown_content: &str) -> String {
+
+    let parser = Parser::new_ext(markdown_content, Options::all());
+
+    let supported_diagrams = ["mermaid", "plantuml", "graphviz", "ditaa", "blockdiag", "structurizr", "seqdiag"];
+    let mut in_diagram_block = false;
+    let mut diagram_lang = String::new();
+
+    // The event transformation logic remains the same.
+    let transformed_events: Vec<Event> = parser.filter_map(|event| {
+        match event {
+            Event::Start(Tag::CodeBlock(CodeBlockKind::Fenced(lang))) => {
+                let lang_str = lang.into_string();
+                if supported_diagrams.contains(&lang_str.as_str()) {
+                    in_diagram_block = true;
+                    diagram_lang = lang_str;
+                    None 
+                } else {
+                    Some(Event::Start(Tag::CodeBlock(CodeBlockKind::Fenced(lang_str.into()))))
+                }
+            }
+            Event::Text(text) => {
+                if in_diagram_block {
+                    let kroki_url = generate_kroki_url(&diagram_lang, &text);
+                    let html = format!("<img class=\"kroki-diagram\" src=\"{}\" alt=\"Diagram: {}\">", kroki_url, diagram_lang);
+                    
+                    Some(Event::Html(html.into()))
+                } else {
+                    Some(Event::Text(text))
+                }
+            }
+            Event::End(TagEnd::CodeBlock) => {
+                if in_diagram_block {
+                    in_diagram_block = false;
+                    diagram_lang.clear();
+                    None
+                } else {
+                    Some(Event::End(TagEnd::CodeBlock))
+                }
+            }
+            _ => Some(event),
+        }
+    }).collect();
+
+    let mut html_output = String::new();
+    pulldown_cmark::html::push_html(&mut html_output, transformed_events.into_iter());
+
+    html_output
+}
 
 #[component]
 pub fn DocumentEditor(
@@ -248,9 +310,7 @@ pub fn DocumentEditor(
     });
 
     let rendered_html = move || {
-        let mut parser = markdown_it::MarkdownIt::new();
-        markdown_it::plugins::cmark::add(&mut parser);
-        parser.parse(&content.get()).render()
+        render_markdown(&content.get())
     };
 
     view! {

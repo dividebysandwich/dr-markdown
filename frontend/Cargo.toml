@@ -21,7 +21,7 @@ uuid = { workspace = true }
 chrono = { workspace = true }
 
 # Markdown parsing
-markdown-it = "0.6"
+pulldown-cmark = "0.13" 
 
 # Web APIs
 web-sys = { version = "0.3", features = ["Request", "RequestInit", "TextDecoder"] }
@@ -35,6 +35,10 @@ leptos_meta = "0.8.5"
 wasm-bindgen-futures = "0.4.53"
 futures = "0.3"
 js-sys = "0.3"
+
+# Diagram generation
+flate2 = "1.0"
+base64 = "0.22"
 
 [profile.release]
 opt-level = 'z'
