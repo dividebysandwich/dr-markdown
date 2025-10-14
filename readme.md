@@ -86,6 +86,7 @@ The application can be configured via environment variables:
 - `API_URL`: Address the frontend uses to reach the backend (default: `http://localhost:3001/api`)
 - `OLLAMA_ADDR`: Address to a (local or remote) Ollama instance (default: `http://localhost:11434`)
 - `OLLAMA_MODEL`: The model to use (default: `llama3.2`)
+- `KROKI_URL`: The address of a kroki server, default is https://kroki.io
 
 ## API Endpoints
 
