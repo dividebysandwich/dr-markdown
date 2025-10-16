@@ -1201,6 +1201,14 @@ html.dark .chat-sidebar div[class*="dark:bg-gray-700"] {
     opacity: 0.8;
 }
 
+.resize-vertical { resize: vertical; }
+
+.resizable-pane {
+    overflow: auto;   /* This is required for 'resize' to work */
+    resize: vertical;
+    min-height: 100px;  /* Prevents the user from collapsing it completely */
+}
+
         menu,
         ol,
         ul {

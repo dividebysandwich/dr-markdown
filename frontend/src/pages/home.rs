@@ -14,7 +14,7 @@ use crate::{
     auth::use_auth,
     components::DocumentSidebar,
     models::{Document, DocumentSummary},
-    app::{THEME_LIGHT, THEME_DARK, KROKI_URL, use_chat_sidebar, EditorContext, use_editor},
+    app::{THEME_LIGHT, THEME_DARK, KROKI_URL, use_chat_sidebar, EditorContext, use_editor, use_sidebar},
 };
 
 #[component]
@@ -256,17 +256,16 @@ pub fn DocumentEditor(
     client: Arc<ApiClient>,
 ) -> impl IntoView {
 
-    let editor_context = use_editor();
-    let content = editor_context.0;
-    content.set(document.content.clone()); // Set initial value
+    let (content, set_content) = signal(document.content.clone());
 
     let (title, set_title) = signal(document.title.clone());
     let (is_editing, set_is_editing) = signal(false);
     let (saving, set_saving) = signal(false);
     let (show_confirm_dialog, set_show_confirm_dialog) = signal(false);
+    let show_preview = RwSignal::new(false);
 
-    provide_context(EditorContext(content));
     let chat_sidebar = use_chat_sidebar();
+    let mobile_sidebar = use_sidebar();
 
     let client_save = client.clone();
     let doc_id = document.id;
@@ -314,9 +313,15 @@ pub fn DocumentEditor(
     };
 
     view! {
-        <div class="flex-1 flex flex-col overflow-hidden">
-            <header class="bg-white border-b border-gray-200 px-6 py-4 flex items-center justify-between">
-                <div class="flex items-center flex-1">
+<div class="flex-1 flex flex-col overflow-hidden">
+            <header class="bg-white dark:bg-gray-900 border-b border-gray-200 dark:border-gray-700 px-4 sm:px-6 py-4 flex items-center justify-between">
+                <div class="flex items-center flex-1 min-w-0">
+                    <button
+                        class="text-gray-500 dark:text-gray-400 focus:outline-none md:hidden mr-4"
+                        on:click=move |_| mobile_sidebar.0.update(|open| *open = !*open)
+                    >
+                        // Hamburger icon SVG
+                    </button>
                     <input
                         class="text-xl font-semibold text-gray-900 dark:text-gray-50 border-none outline-none bg-transparent w-full"
                         prop:value=title
@@ -324,30 +329,44 @@ pub fn DocumentEditor(
                         on:blur=move |_| { save_document.dispatch(()); }
                     />
                 </div>
-                <div class="flex items-center space-x-3">
+                <div class="flex items-center space-x-2">
+                    // This button enters edit mode
+                    <Show when=move || !is_editing.get()>
+                        <button
+                            class="px-4 py-2 text-sm font-medium text-gray-700 bg-gray-100 border border-gray-300 rounded-md hover:bg-gray-200"
+                            on:click=move |_| set_is_editing.update(|editing| *editing = !*editing)
+                        >
+                            Edit
+                        </button>
+                    </Show>
+
+                    // The "Live Preview" button is now only shown when in Edit Mode
+                    <Show when=move || is_editing.get()>
+                        <button
+                            class="px-4 py-2 text-sm font-medium rounded-md border"
+                            class:bg-blue-50=move || show_preview.get()
+                            on:click=move |_| show_preview.update(|show| *show = !*show)
+                        >
+                            "Live Preview"
+                        </button>
+                    </Show>
+
                     <button
                         class="px-4 py-2 text-sm font-medium text-gray-700 bg-gray-100 border border-gray-300 rounded-md hover:bg-gray-200 focus:outline-none focus:ring-2 focus:ring-blue-500"
-                        on:click=move |_| { chat_sidebar.0.update(|open| *open = !*open) }
-                    >
+                        on:click=move |_| chat_sidebar.0.update(|open| *open = !*open)>
                         {move || if chat_sidebar.0.get() { "Close AI" } else { "AI Chat" }}
                     </button>
-                    <button
-                        class="px-4 py-2 text-sm font-medium text-gray-700 bg-gray-100 border border-gray-300 rounded-md hover:bg-gray-200 focus:outline-none focus:ring-2 focus:ring-blue-500"
-                        on:click=move |_| set_is_editing.update(|editing| *editing = !*editing)
-                    >
-                        {move || if is_editing.get() { "Preview" } else { "Edit" }}
-                    </button>
-                    <button
+                    <button 
                         class="px-4 py-2 text-sm font-medium text-white bg-blue-600 border border-transparent rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:opacity-50"
                         on:click=move |_| { save_document.dispatch(()); }
-                        disabled=move || saving.get()
-                    >
+                        disabled=move || { saving.get() || !is_editing.get() }
+
+                        >
                         {move || if saving.get() { "Saving..." } else { "Save" }}
                     </button>
                     <button
-                        class="px-4 py-2 text-sm font-medium text-white bg-red-600 border border-transparent rounded-md hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-red-500"
-                        on:click=move |_| { set_show_confirm_dialog.set(true); }
-                    >
+                        class="px-4 py-2 text-sm font-medium text-white bg-red-600 border border-transparent rounded-md hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-red-500" 
+                        on:click=move |_| set_show_confirm_dialog.set(true)>
                         "Delete"
                     </button>
                 </div>
@@ -387,17 +406,34 @@ pub fn DocumentEditor(
                 <Show
                     when=move || is_editing.get()
                     fallback=move || view! {
+                        // VIEW MODE: a single, full-pane preview.
                         <div class="h-full overflow-auto p-6 prose prose-lg max-w-none" inner_html=rendered_html()></div>
                     }
                 >
-                    <textarea
-                        class="w-full h-full p-6 border-none outline-none resize-none font-mono text-sm"
-                        prop:value=content
-                        on:input=move |ev| content.set(event_target_value(&ev))
-                        placeholder="Start writing your markdown..."
-                    ></textarea>
+                    // EDIT MODE: split-pane editor with preview.
+                    <div class="flex flex-col h-full">
+                        <Show when=move || show_preview.get()>
+                            <div
+                                class="resizable-pane border-b border-gray-200 dark:border-gray-700"
+                                style="height: 50%;" // An initial height
+                            >
+                                <div class="p-6 prose prose-lg max-w-none" inner_html=rendered_html()></div>
+                            </div>
+                        </Show>
+                        <div class="flex-1">
+                            <textarea
+                                class="w-full h-full p-6 border-none outline-none resize-none font-mono text-sm dark:bg-gray-800 dark:text-gray-50"
+                                prop:value=content
+                                on:input=move |ev| set_content.set(event_target_value(&ev))
+                                placeholder="Start writing your markdown..."
+                            ></textarea>
+                        </div>
+                    </div>
                 </Show>
             </div>
         </div>
+
+
+
     }
 }
