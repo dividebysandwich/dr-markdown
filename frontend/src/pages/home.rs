@@ -1,5 +1,4 @@
 use leptos::*;
-use leptos::html::{Div, Textarea};
 use leptos::prelude::*;
 use leptos::task::spawn_local;
 use leptos_router::hooks::use_navigate;
@@ -16,7 +15,7 @@ use crate::{
     auth::use_auth,
     components::DocumentSidebar,
     models::{Document, DocumentSummary},
-    app::{THEME_LIGHT, THEME_DARK, KROKI_URL, use_chat_sidebar, EditorContext, use_editor, use_sidebar},
+    app::{THEME_LIGHT, THEME_DARK, KROKI_URL, use_chat_sidebar, use_sidebar},
 };
 
 #[component]
@@ -270,8 +269,8 @@ pub fn DocumentEditor(
     let mobile_sidebar = use_sidebar();
 
     // For scrolling the preview pane
-    let editor_ref = create_node_ref::<Textarea>();
-    let preview_ref = create_node_ref::<Div>();
+    let editor_ref = NodeRef::new();
+    let preview_ref = NodeRef::new();
 
     let client_save = client.clone();
     let doc_id = document.id;
