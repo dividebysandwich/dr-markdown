@@ -1,4 +1,5 @@
 use leptos::*;
+use leptos::html::{Div, Textarea};
 use leptos::prelude::*;
 use leptos::task::spawn_local;
 use leptos_router::hooks::use_navigate;
@@ -8,6 +9,7 @@ use flate2::write::ZlibEncoder;
 use flate2::Compression;
 use std::io::Write;
 use pulldown_cmark::{Parser, Options, Event, Tag, CodeBlockKind, TagEnd};
+use web_sys;
 
 use crate::{
     api::ApiClient,
@@ -267,6 +269,10 @@ pub fn DocumentEditor(
     let chat_sidebar = use_chat_sidebar();
     let mobile_sidebar = use_sidebar();
 
+    // For scrolling the preview pane
+    let editor_ref = create_node_ref::<Textarea>();
+    let preview_ref = create_node_ref::<Div>();
+
     let client_save = client.clone();
     let doc_id = document.id;
     let save_document = Action::new_local(move |_: &()| {
@@ -417,14 +423,50 @@ pub fn DocumentEditor(
                                 class="resizable-pane border-b border-gray-200 dark:border-gray-700"
                                 style="height: 50%;" // An initial height
                             >
-                                <div class="p-6 prose prose-lg max-w-none" inner_html=rendered_html()></div>
+                                <div 
+                                    node_ref=preview_ref
+                                    class="h-full overflow-auto p-6 prose prose-lg max-w-none dark:prose-invert" inner_html=rendered_html()>
+                                </div>
                             </div>
                         </Show>
                         <div class="flex-1">
                             <textarea
+                                node_ref=editor_ref
                                 class="w-full h-full p-6 border-none outline-none resize-none font-mono text-sm dark:bg-gray-800 dark:text-gray-50"
                                 prop:value=content
-                                on:input=move |ev| set_content.set(event_target_value(&ev))
+                                on:input=move |ev| {
+                                    let new_value = event_target_value(&ev);
+                                    set_content.set(new_value);
+
+                                    // Defer the scroll calculation to the next animation frame.
+                                    // This ensures the preview pane has been updated with the new HTML
+                                    // before we try to measure its height for scrolling.
+                                    request_animation_frame(move || {
+                                        if let (Some(editor), Some(preview)) = (editor_ref.get_untracked(), preview_ref.get_untracked()) {
+                                            // Cast the generic elements to their specific HTML types
+                                            let editor_el: &web_sys::HtmlTextAreaElement = &editor;
+                                            let preview_el: &web_sys::HtmlElement = &preview;
+
+                                            // Get the cursor's position in the textarea
+                                            let cursor_pos = editor_el.selection_start().unwrap_or(Some(0)).unwrap_or(0) as f64;
+                                            let content_len = editor_el.value().len() as f64;
+
+                                            if content_len > 0.0 {
+                                                // Calculate how far down the document the cursor is (a ratio from 0.0 to 1.0)
+                                                let scroll_ratio = cursor_pos / content_len;
+                                                
+                                                // Calculate the total scrollable height of the preview pane
+                                                let max_preview_scroll = (preview_el.scroll_height() - preview_el.client_height()) as f64;
+                                                
+                                                // Determine the target scroll position based on the cursor's ratio
+                                                let target_scroll_top = scroll_ratio * max_preview_scroll;
+                                                
+                                                // Set the preview pane's scroll position
+                                                preview_el.set_scroll_top(target_scroll_top as i32);
+                                            }
+                                        }
+                                    });
+                                }
                                 placeholder="Start writing your markdown..."
                             ></textarea>
                         </div>
