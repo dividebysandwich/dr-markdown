@@ -15,7 +15,7 @@ use crate::{
     auth::use_auth,
     components::DocumentSidebar,
     models::{Document, DocumentSummary},
-    app::{THEME_LIGHT, THEME_DARK, KROKI_URL, use_chat_sidebar, use_sidebar},
+    app::{THEME_LIGHT, THEME_DARK, KROKI_URL, use_chat_sidebar, use_sidebar, use_editor},
 };
 
 #[component]
@@ -55,7 +55,8 @@ pub fn HomePage() -> impl IntoView {
                 let error_message = RwSignal::new(Option::<String>::None);
 
                 let client = Arc::new(ApiClient::with_token(token.clone()));
-                
+                let editor_context = use_editor();
+
                 let client_effect = client.clone();
                 Effect::new(move |_| {
                     let client_effect_clone = client_effect.clone();
@@ -169,6 +170,7 @@ pub fn HomePage() -> impl IntoView {
                                             docs.retain(|d| d.id != doc_id);
                                         });
                                         selected_document.set(None);
+                                        editor_context.0.set(String::new());
                                     }
                                     client=client_for_editor.clone()
                                 />
@@ -268,7 +270,9 @@ pub fn DocumentEditor(
     let chat_sidebar = use_chat_sidebar();
     let mobile_sidebar = use_sidebar();
 
-    // For scrolling the preview pane
+    let editor_context = use_editor();
+    editor_context.0.set(document.content.clone());
+
     let editor_ref = NodeRef::new();
     let preview_ref = NodeRef::new();
 
@@ -435,7 +439,8 @@ pub fn DocumentEditor(
                                 prop:value=content
                                 on:input=move |ev| {
                                     let new_value = event_target_value(&ev);
-                                    set_content.set(new_value);
+                                    set_content.set(new_value.clone());
+                                    editor_context.0.set(new_value.clone());
 
                                     // Defer the scroll calculation to the next animation frame.
                                     // This ensures the preview pane has been updated with the new HTML
