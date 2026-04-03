@@ -68,10 +68,26 @@ async fn main() -> Result<()> {
 
     let state = AppState { db, config };
     
-    // Serve frontend static files if the dist directory exists
-    let frontend_dir = std::path::PathBuf::from("../frontend/dist");
+    // Resolve the frontend dist directory.
+    // Check relative to the executable first, then relative to CWD.
+    let frontend_dir = {
+        let candidates = [
+            std::env::current_exe()
+                .ok()
+                .and_then(|p| p.parent().map(|p| p.to_path_buf()))
+                .map(|p| p.join("../../frontend/dist")),
+            Some(std::path::PathBuf::from("../frontend/dist")),
+        ];
+        candidates
+            .into_iter()
+            .flatten()
+            .find(|p| p.join("index.html").exists())
+    };
 
-    let app = if frontend_dir.exists() {
+    let app = if let Some(frontend_dir) = frontend_dir {
+        let frontend_dir = frontend_dir.canonicalize().unwrap_or(frontend_dir);
+        println!("Serving frontend from: {:?}", frontend_dir);
+
         let index_file = frontend_dir.join("index.html");
         let serve_dir = ServeDir::new(&frontend_dir)
             .fallback(ServeFile::new(&index_file));
@@ -82,7 +98,9 @@ async fn main() -> Result<()> {
             .layer(CorsLayer::permissive())
             .with_state(state)
     } else {
-        println!("Note: Frontend dist directory not found at {:?}, serving API only", frontend_dir);
+        println!("Note: Frontend dist directory not found, serving API only");
+        println!("  CWD: {:?}", std::env::current_dir().ok());
+        println!("  EXE: {:?}", std::env::current_exe().ok());
         Router::new()
             .nest("/api", routes::create_routes())
             .layer(CorsLayer::permissive())
