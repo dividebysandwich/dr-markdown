@@ -112,33 +112,65 @@ The application can be configured via environment variables:
 
 ### Running in Development
 
-1. **Backend** (terminal 1):
-```bash
-cd backend
-cargo watch -x run
-```
-
-2. **Frontend** (terminal 2):
+1. **Frontend**
 ```bash
 cd frontend
 trunk serve --open
 ```
 
-### Building for Production
-
-1. **Backend**:
+2. **Backend**
 ```bash
 cd backend
-cargo build --release
+cargo watch -x run
 ```
 
-2. **Frontend**:
+### Building for Production
+
+1. **Frontend**:
 ```bash
 cd frontend
 trunk build --release
 ```
 
+2. **Backend**:
+```bash
+cd backend
+cargo build --release
+```
+
 The built frontend files will be in `frontend/dist/`.
+
+### Example run script
+
+```
+#!/bin/bash
+export LEPTOS_APP_BASE_PATH=/drmarkdown
+export TRUNK_BUILD_PUBLIC_URL=/drmarkdown/
+export SERVER_PORT=3002
+export SERVER_ADDR=0.0.0.0
+export API_URL=https://server.com/drmarkdown/api
+export OLLAMA_ADDR=http://192.168.178.9:11434
+export OLLAMA_MODEL=qwen2.5:3b
+export KROKI_URL=https://server.com
+cd /home/drmarkdown/dr-markdown/frontend
+trunk build --release
+cd ../backend
+screen -dmS drmd-backend cargo run --release
+```
+
+### Example nginx config for the example run script
+
+```
+    location /drmarkdown/ {
+        proxy_buffering off;
+        proxy_request_buffering off;
+        proxy_pass http://localhost:3002/;
+        proxy_http_version 1.1;
+        proxy_set_header Upgrade $http_upgrade;
+        proxy_set_header Connection "upgrade";
+        proxy_set_header Host $host;
+    }
+```
 
 ### Database Migrations
 
