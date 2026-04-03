@@ -5,10 +5,22 @@ use uuid::Uuid;
 
 use crate::models::*;
 
-pub const API_URL: &str = match option_env!("API_URL") {
-    Some(path) => path,
-    None => "/api",
-};
+use crate::app::APP_BASE;
+
+pub const API_URL_OVERRIDE: Option<&str> = option_env!("API_URL");
+
+pub fn api_url() -> String {
+    match API_URL_OVERRIDE {
+        Some(url) => url.to_string(),
+        None => {
+            if APP_BASE.is_empty() {
+                "/api".to_string()
+            } else {
+                format!("{}/api", APP_BASE)
+            }
+        }
+    }
+}
 
 #[derive(Debug, PartialEq)]
 pub struct ApiClient {
@@ -47,7 +59,7 @@ impl ApiClient {
     }
 
     fn build_request(&self, method: &str, path: &str) -> RequestBuilder {
-        let url = format!("{}{}", API_URL, path);
+        let url = format!("{}{}", api_url(), path);
         let mut req = RequestBuilder::new(&url).method(gloo_net::http::Method::from_bytes(method.as_bytes()).unwrap());
 
         if let Some(token) = &self.token {

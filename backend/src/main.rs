@@ -71,20 +71,34 @@ async fn main() -> Result<()> {
     // Serve frontend static files if the dist directory exists
     let frontend_dir = std::path::PathBuf::from("../frontend/dist");
 
+    let api_path = if APP_BASE.is_empty() {
+        "/api".to_string()
+    } else {
+        format!("{}/api", APP_BASE)
+    };
+
     let app = if frontend_dir.exists() {
         let index_file = frontend_dir.join("index.html");
         let serve_dir = ServeDir::new(&frontend_dir)
             .fallback(ServeFile::new(&index_file));
 
-        Router::new()
-            .nest("/api", routes::create_routes())
-            .fallback_service(serve_dir)
-            .layer(CorsLayer::permissive())
-            .with_state(state)
+        if APP_BASE.is_empty() {
+            Router::new()
+                .nest("/api", routes::create_routes())
+                .fallback_service(serve_dir)
+                .layer(CorsLayer::permissive())
+                .with_state(state)
+        } else {
+            Router::new()
+                .nest(&api_path, routes::create_routes())
+                .nest_service(APP_BASE, serve_dir)
+                .layer(CorsLayer::permissive())
+                .with_state(state)
+        }
     } else {
         println!("Note: Frontend dist directory not found at {:?}, serving API only", frontend_dir);
         Router::new()
-            .nest("/api", routes::create_routes())
+            .nest(&api_path, routes::create_routes())
             .layer(CorsLayer::permissive())
             .with_state(state)
     };

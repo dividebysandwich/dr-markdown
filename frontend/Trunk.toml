@@ -1,6 +1,8 @@
 [build]
 target = "index.html"
 dist = "dist"
+# Set TRUNK_BUILD_PUBLIC_URL to match LEPTOS_APP_BASE_PATH when building.
+# e.g.: TRUNK_BUILD_PUBLIC_URL=/myapp/ trunk build
 
 [watch]
 watch = ["src", "index.html"]
