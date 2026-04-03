@@ -21,6 +21,7 @@ pub struct Document {
     pub content: String,
     pub created_at: DateTime<Utc>,
     pub updated_at: DateTime<Utc>,
+    pub share_token: Option<String>,
 }
 
 #[derive(Debug, Deserialize, Validate)]
@@ -88,6 +89,7 @@ pub struct DocumentResponse {
     pub content: String,
     pub created_at: DateTime<Utc>,
     pub updated_at: DateTime<Utc>,
+    pub share_token: Option<String>,
 }
 
 impl From<Document> for DocumentResponse {
@@ -98,8 +100,15 @@ impl From<Document> for DocumentResponse {
             content: doc.content,
             created_at: doc.created_at,
             updated_at: doc.updated_at,
+            share_token: doc.share_token,
         }
     }
+}
+
+#[derive(Debug, Serialize)]
+pub struct SharedDocumentResponse {
+    pub title: String,
+    pub content: String,
 }
 
 #[derive(Debug, Serialize)]

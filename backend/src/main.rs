@@ -11,6 +11,7 @@ use axum::Router;
 use sqlx::sqlite::SqlitePool;
 use std::sync::Arc;
 use tower_http::cors::CorsLayer;
+use tower_http::services::{ServeDir, ServeFile};
 
 use crate::config::Config;
 use crate::database::Database;
@@ -67,11 +68,26 @@ async fn main() -> Result<()> {
 
     let state = AppState { db, config };
     
-    // Build router
-    let app = Router::new()
-        .nest("/api", routes::create_routes())
-        .layer(CorsLayer::permissive())
-        .with_state(state);
+    // Serve frontend static files if the dist directory exists
+    let frontend_dir = std::path::PathBuf::from("../frontend/dist");
+
+    let app = if frontend_dir.exists() {
+        let index_file = frontend_dir.join("index.html");
+        let serve_dir = ServeDir::new(&frontend_dir)
+            .fallback(ServeFile::new(&index_file));
+
+        Router::new()
+            .nest("/api", routes::create_routes())
+            .fallback_service(serve_dir)
+            .layer(CorsLayer::permissive())
+            .with_state(state)
+    } else {
+        println!("Note: Frontend dist directory not found at {:?}, serving API only", frontend_dir);
+        Router::new()
+            .nest("/api", routes::create_routes())
+            .layer(CorsLayer::permissive())
+            .with_state(state)
+    };
 
     // Start server
     let addr = format!("{}:{}", SERVER_ADDR, get_server_port());

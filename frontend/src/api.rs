@@ -7,7 +7,7 @@ use crate::models::*;
 
 pub const API_URL: &str = match option_env!("API_URL") {
     Some(path) => path,
-    None => "http://localhost:3001/api",
+    None => "/api",
 };
 
 #[derive(Debug, PartialEq)]
@@ -192,6 +192,27 @@ impl ApiClient {
             });
             Err(error)
         }
+    }
+
+    pub async fn create_share_link(&self, id: Uuid) -> Result<Document, ApiError> {
+        let req_builder = self.build_request("POST", &format!("/documents/{}/share", id));
+        let response = req_builder.send().await.map_err(|e| ApiError {
+            error: format!("Network error: {}", e),
+        })?;
+        handle_response(response).await
+    }
+
+    pub async fn remove_share_link(&self, id: Uuid) -> Result<Document, ApiError> {
+        let req_builder = self.build_request("DELETE", &format!("/documents/{}/share", id));
+        let response = req_builder.send().await.map_err(|e| ApiError {
+            error: format!("Network error: {}", e),
+        })?;
+        handle_response(response).await
+    }
+
+    pub async fn get_shared_document(&self, token: &str) -> Result<SharedDocument, ApiError> {
+        let req_builder = self.build_request("GET", &format!("/shared/{}", token));
+        self.send_request_builder(req_builder).await
     }
 
     pub async fn ollama_chat_streaming(&self, body: &impl serde::Serialize) -> Result<gloo_net::http::Response, gloo_net::Error> {

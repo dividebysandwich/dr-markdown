@@ -30,7 +30,7 @@ pub fn ChatSidebar() -> impl IntoView {
     let user_input = RwSignal::new(String::new());
     let is_thinking = RwSignal::new(false);
 
-    let on_submit = move |_| {
+    let do_submit = move || {
         let message = user_input.get_untracked();
         if message.is_empty() { return; }
 
@@ -44,13 +44,12 @@ pub fn ChatSidebar() -> impl IntoView {
         spawn_local(async move {
             let body = ChatApiRequest { context, message };
             let token = auth.state.get_untracked().token;
-            
+
             if let Some(token) = token {
                 let client = ApiClient::with_token(token);
                 let res = client.ollama_chat_streaming(&body).await;
 
                 if let Ok(res) = res {
-
                     let raw_stream = res.body().unwrap();
                     let mut stream = ReadableStream::from_raw(raw_stream).into_stream();
 
@@ -97,16 +96,25 @@ pub fn ChatSidebar() -> impl IntoView {
             is_thinking.set(false);
         });
     };
+
     view! {
+        // Backdrop on mobile
+        <Show when=move || chat_sidebar.0.get()>
+            <div
+                class="fixed inset-0 bg-black/40 backdrop-blur-sm z-40 sm:hidden"
+                on:click=move |_| chat_sidebar.0.set(false)
+            ></div>
+        </Show>
+
         <aside class=move || format!(
-            "chat-sidebar w-80 bg-white dark:bg-gray-900 border-l border-gray-200 dark:border-gray-700 flex flex-col \
-            fixed inset-y-0 right-0 z-50 transform {} transition-transform duration-300 ease-in-out",
-            if chat_sidebar.0.get() { "right-0" } else { "-right-80" }
+            "w-full sm:w-80 bg-white dark:bg-gray-800 border-l border-gray-200 dark:border-gray-700 flex flex-col \
+            fixed inset-y-0 right-0 z-50 transform {} transition-transform duration-300 ease-in-out \
+            sm:max-w-80",
+            if chat_sidebar.0.get() { "translate-x-0" } else { "translate-x-full" }
         )>
-            <header class="text-xl p-4 flex items-center justify-between">
-                
+            <header class="px-4 py-3 flex items-center justify-between border-b border-gray-200 dark:border-gray-700 shrink-0">
                 <button
-                    class="p-1 rounded-md hover:bg-gray-100 dark:hover:bg-gray-700"
+                    class="p-1.5 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
                     on:click=move |_| chat_sidebar.0.set(false)
                     title="Close Assistant"
                 >
@@ -114,11 +122,19 @@ pub fn ChatSidebar() -> impl IntoView {
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
                     </svg>
                 </button>
-                <h2 class="text-xl font-semibold text-gray-800 dark:text-gray-100">AI Assistant</h2>
-                <div class="w-5 h-5"></div>
+                <h2 class="text-sm font-semibold text-gray-800 dark:text-gray-100">"AI Assistant"</h2>
+                <div class="w-8"></div>
             </header>
-            
-            <div class="flex-1 overflow-y-auto p-4 space-y-4">
+
+            <div class="flex-1 overflow-y-auto p-4 space-y-3">
+                <Show when=move || messages.get().is_empty()>
+                    <div class="text-center py-8">
+                        <svg class="w-10 h-10 mx-auto text-gray-300 dark:text-gray-600 mb-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-5 5v-5z"></path>
+                        </svg>
+                        <p class="text-xs text-gray-400 dark:text-gray-500">"Ask the AI about your document"</p>
+                    </div>
+                </Show>
                 <For
                     each=move || messages.get()
                     key=|msg| format!("{}-{}", msg.sender, msg.text)
@@ -126,11 +142,13 @@ pub fn ChatSidebar() -> impl IntoView {
                         let is_user = Memo::new(move |_| msg.sender == "User");
                         view! {
                             <div class=move || if is_user.get() { "text-right" } else { "text-left" }>
-                                <div class="inline-block p-3 rounded-lg"
-                                     class:bg-blue-500=move || is_user.get()
-                                     class:text-white=move || is_user.get()
-                                     class:bg-gray-200=move || !is_user.get()
-                                     class:dark:bg-gray-700=move || !is_user.get()
+                                <div class="inline-block p-3 rounded-xl max-w-[85%] text-sm"
+                                     class=("bg-blue-600", move || is_user.get())
+                                     class=("text-white", move || is_user.get())
+                                     class=("bg-gray-100", move || !is_user.get())
+                                     class=("dark:bg-gray-700", move || !is_user.get())
+                                     class=("text-gray-800", move || !is_user.get())
+                                     class=("dark:text-gray-200", move || !is_user.get())
                                 >
                                     <div inner_html={msg.text}></div>
                                 </div>
@@ -139,38 +157,43 @@ pub fn ChatSidebar() -> impl IntoView {
                     }
                 />
                 <Show when=move || is_thinking.get()>
-                    <div class="inline-block p-3 rounded-lg bg-gray-200 dark:bg-gray-700">
-                        <div class="flex items-center justify-center space-x-1">
-                            <svg fill="currentColor" width="20" height="20" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" class="text-gray-500 dark:text-gray-400">
-                                <circle cx="4" cy="12" r="3">
-                                    <animate id="a" begin="0;c.end-0.25s" attributeName="cy" dur="0.75s" values="12;6;12" fill="freeze"/>
-                                </circle>
-                                <circle cx="12" cy="12" r="3">
-                                    <animate begin="a.begin+0.15s" attributeName="cy" dur="0.75s" values="12;6;12" fill="freeze"/>
-                                </circle>
-                                <circle cx="20" cy="12" r="3">
-                                    <animate id="c" begin="a.begin+0.3s" attributeName="cy" dur="0.75s" values="12;6;12" fill="freeze"/>
-                                </circle>
-                            </svg>
+                    <div class="text-left">
+                        <div class="inline-block p-3 rounded-xl bg-gray-100 dark:bg-gray-700">
+                            <div class="flex items-center space-x-1.5">
+                                <div class="w-2 h-2 bg-gray-400 dark:bg-gray-500 rounded-full animate-bounce" style="animation-delay: 0ms"></div>
+                                <div class="w-2 h-2 bg-gray-400 dark:bg-gray-500 rounded-full animate-bounce" style="animation-delay: 150ms"></div>
+                                <div class="w-2 h-2 bg-gray-400 dark:bg-gray-500 rounded-full animate-bounce" style="animation-delay: 300ms"></div>
+                            </div>
                         </div>
                     </div>
                 </Show>
             </div>
 
-            <div class="p-4 border-t border-gray-200 dark:border-gray-700">
-                <textarea
-                    class="w-full p-2 border border-gray-300 rounded-md dark:bg-gray-800 dark:border-gray-600"
-                    rows="3"
-                    prop:value=user_input
-                    on:input=move |ev| user_input.set(event_target_value(&ev))
-                ></textarea>
-                <button
-                    class="w-full mt-2 px-4 py-2 text-white bg-blue-600 rounded-md hover:bg-blue-700"
-                    on:click=on_submit
-                    disabled=move || is_thinking.get()
-                >
-                    "Send"
-                </button>
+            <div class="p-3 border-t border-gray-200 dark:border-gray-700 shrink-0">
+                <div class="flex gap-2">
+                    <textarea
+                        class="flex-1 p-2.5 text-sm border border-gray-200 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 resize-none focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        rows="2"
+                        placeholder="Ask about your document..."
+                        prop:value=user_input
+                        on:input=move |ev| user_input.set(event_target_value(&ev))
+                        on:keypress=move |ev| {
+                            if ev.key() == "Enter" && !ev.shift_key() {
+                                ev.prevent_default();
+                                do_submit();
+                            }
+                        }
+                    ></textarea>
+                    <button
+                        class="self-end p-2.5 text-white bg-blue-600 rounded-lg hover:bg-blue-700 disabled:opacity-50 transition-colors shrink-0"
+                        on:click=move |_| { do_submit(); }
+                        disabled=move || is_thinking.get()
+                    >
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8"></path>
+                        </svg>
+                    </button>
+                </div>
             </div>
         </aside>
     }

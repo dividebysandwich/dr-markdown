@@ -15,21 +15,14 @@ pub fn DocumentPage() -> impl IntoView {
     let navigate = use_navigate();
     let navigate_for_delete = navigate.clone();
     let navigate_for_auth = navigate.clone();
-    
+
     let (delete_trigger, set_delete_trigger) = signal(());
 
     Effect::new(move |prev: Option<()>| {
-        // Establish a dependency on the trigger signal.
         delete_trigger.get();
-
-        // The `prev` argument is `None` on the first run of the effect.
-        // On subsequent runs (i.e., when `set_delete_trigger` is called),
-        // `prev` will be `Some(())`. This is how we prevent navigating on load.
         if prev.is_some() {
             navigate_for_delete("/", Default::default());
         }
-        
-        // The return value of the effect becomes the `prev` for the next run.
         ()
     });
 
@@ -79,7 +72,7 @@ pub fn DocumentPage() -> impl IntoView {
     view! {
         <Show when=move || auth.state.get().loading>
             <div class="flex items-center justify-center h-full">
-                <div class="text-lg">"Loading..."</div>
+                <div class="animate-spin rounded-full h-10 w-10 border-b-2 border-blue-600"></div>
             </div>
         </Show>
 
@@ -90,12 +83,15 @@ pub fn DocumentPage() -> impl IntoView {
                     when=move || document_and_client.get().is_some()
                     fallback=move || view! {
                         <div class="flex items-center justify-center h-full">
-                            <div class="text-center">
-                                <h1 class="text-2xl font-bold text-gray-900 dark:text-gray-50 mb-4">"Document not found"</h1>
+                            <div class="text-center p-8">
+                                <svg class="w-16 h-16 mx-auto text-gray-300 dark:text-gray-600 mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
+                                </svg>
+                                <h1 class="text-2xl font-bold text-gray-900 dark:text-gray-50 mb-2">"Document not found"</h1>
                                 {move || error.get().map(|err| view! {
-                                    <p class="text-red-600 mb-4">{err}</p>
+                                    <p class="text-red-500 mb-4 text-sm">{err}</p>
                                 })}
-                                <A href=format!("{}/", APP_BASE) prop:class="text-blue-600 hover:text-blue-800 underline">
+                                <A href=format!("{}/", APP_BASE) prop:class="text-blue-600 dark:text-blue-400 hover:text-blue-800 dark:hover:text-blue-300 underline text-sm">
                                     "Go back home"
                                 </A>
                             </div>
@@ -124,7 +120,10 @@ pub fn DocumentPage() -> impl IntoView {
             }
         >
             <div class="flex items-center justify-center h-full">
-                <div class="text-lg">"Loading document..."</div>
+                <div class="text-center">
+                    <div class="animate-spin rounded-full h-10 w-10 border-b-2 border-blue-600 mx-auto mb-4"></div>
+                    <p class="text-gray-500 dark:text-gray-400 text-sm">"Loading document..."</p>
+                </div>
             </div>
         </Show>
     }

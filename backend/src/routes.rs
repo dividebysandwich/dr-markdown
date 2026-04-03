@@ -16,5 +16,8 @@ pub fn create_routes() -> Router<AppState> {
         .route("/documents/{id}", get(handlers::get_document))
         .route("/documents/{id}", put(handlers::update_document))
         .route("/documents/{id}", delete(handlers::delete_document))
+        .route("/documents/{id}/share", post(handlers::create_share_link))
+        .route("/documents/{id}/share", delete(handlers::remove_share_link))
+        .route("/shared/{token}", get(handlers::get_shared_document))
         .route("/llm", post(llm::ollama_chat_handler))
 }

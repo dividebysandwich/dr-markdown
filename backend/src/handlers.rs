@@ -11,7 +11,8 @@ use crate::{
     auth::{AuthService, AuthUser},
     models::{
         AuthResponse, CreateDocumentRequest, CreateUserRequest, DocumentResponse,
-        DocumentSummary, LoginRequest, UpdateDocumentRequest, UserResponse, SettingsRequest
+        DocumentSummary, LoginRequest, UpdateDocumentRequest, UserResponse, SettingsRequest,
+        SharedDocumentResponse,
     },
     AppState,
 };
@@ -192,6 +193,55 @@ pub async fn delete_document(
     }
 
     Ok(StatusCode::NO_CONTENT)
+}
+
+pub async fn create_share_link(
+    auth_user: AuthUser,
+    State(state): State<AppState>,
+    Path(document_id): Path<Uuid>,
+) -> Result<impl IntoResponse, AppError> {
+    let token = Uuid::new_v4().to_string();
+
+    let document = state
+        .db
+        .set_share_token(document_id, auth_user.user_id, Some(&token))
+        .await?
+        .ok_or(AppError::DocumentNotFound)?;
+
+    let response: DocumentResponse = document.into();
+    Ok(Json(response))
+}
+
+pub async fn remove_share_link(
+    auth_user: AuthUser,
+    State(state): State<AppState>,
+    Path(document_id): Path<Uuid>,
+) -> Result<impl IntoResponse, AppError> {
+    let document = state
+        .db
+        .set_share_token(document_id, auth_user.user_id, None)
+        .await?
+        .ok_or(AppError::DocumentNotFound)?;
+
+    let response: DocumentResponse = document.into();
+    Ok(Json(response))
+}
+
+pub async fn get_shared_document(
+    State(state): State<AppState>,
+    Path(share_token): Path<String>,
+) -> Result<impl IntoResponse, AppError> {
+    let document = state
+        .db
+        .find_document_by_share_token(&share_token)
+        .await?
+        .ok_or(AppError::DocumentNotFound)?;
+
+    let response = SharedDocumentResponse {
+        title: document.title,
+        content: document.content,
+    };
+    Ok(Json(response))
 }
 
 #[derive(Debug, thiserror::Error)]

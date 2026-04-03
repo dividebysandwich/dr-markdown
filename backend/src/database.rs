@@ -154,13 +154,14 @@ impl Database {
             r#"
             INSERT INTO documents (id, user_id, title, content, created_at, updated_at)
             VALUES (?, ?, ?, ?, ?, ?)
-            RETURNING 
-                id as "id: Uuid", 
-                user_id as "user_id: Uuid", 
-                title, 
-                content, 
-                created_at as "created_at: DateTime<Utc>", 
-                updated_at as "updated_at: DateTime<Utc>"
+            RETURNING
+                id as "id: Uuid",
+                user_id as "user_id: Uuid",
+                title,
+                content,
+                created_at as "created_at: DateTime<Utc>",
+                updated_at as "updated_at: DateTime<Utc>",
+                share_token
             "#,
             id,
             user_id,
@@ -183,13 +184,14 @@ impl Database {
         let document = sqlx::query_as!(
             Document,
             r#"
-            SELECT 
-                id as "id: Uuid", 
-                user_id as "user_id: Uuid", 
-                title, 
-                content, 
-                created_at as "created_at: DateTime<Utc>", 
-                updated_at as "updated_at: DateTime<Utc>"
+            SELECT
+                id as "id: Uuid",
+                user_id as "user_id: Uuid",
+                title,
+                content,
+                created_at as "created_at: DateTime<Utc>",
+                updated_at as "updated_at: DateTime<Utc>",
+                share_token
             FROM documents WHERE id = ? AND user_id = ?
             "#,
             document_id,
@@ -205,13 +207,14 @@ impl Database {
         let documents = sqlx::query_as!(
             Document,
             r#"
-            SELECT 
-                id as "id: Uuid", 
-                user_id as "user_id: Uuid", 
-                title, 
-                content, 
-                created_at as "created_at: DateTime<Utc>", 
-                updated_at as "updated_at: DateTime<Utc>"
+            SELECT
+                id as "id: Uuid",
+                user_id as "user_id: Uuid",
+                title,
+                content,
+                created_at as "created_at: DateTime<Utc>",
+                updated_at as "updated_at: DateTime<Utc>",
+                share_token
             FROM documents WHERE user_id = ? ORDER BY updated_at DESC
             "#,
             user_id
@@ -247,13 +250,14 @@ impl Database {
             UPDATE documents
             SET title = ?, content = ?, updated_at = ?
             WHERE id = ? AND user_id = ?
-            RETURNING 
-                id as "id: Uuid", 
-                user_id as "user_id: Uuid", 
-                title, 
-                content, 
-                created_at as "created_at: DateTime<Utc>", 
-                updated_at as "updated_at: DateTime<Utc>"
+            RETURNING
+                id as "id: Uuid",
+                user_id as "user_id: Uuid",
+                title,
+                content,
+                created_at as "created_at: DateTime<Utc>",
+                updated_at as "updated_at: DateTime<Utc>",
+                share_token
             "#,
             new_title,
             new_content,
@@ -265,6 +269,64 @@ impl Database {
         .await?;
 
         Ok(Some(document))
+    }
+
+    pub async fn set_share_token(
+        &self,
+        document_id: Uuid,
+        user_id: Uuid,
+        share_token: Option<&str>,
+    ) -> Result<Option<Document>> {
+        let existing = self.find_document_by_id(document_id, user_id).await?;
+        if existing.is_none() {
+            return Ok(None);
+        }
+
+        let document = sqlx::query_as!(
+            Document,
+            r#"
+            UPDATE documents
+            SET share_token = ?
+            WHERE id = ? AND user_id = ?
+            RETURNING
+                id as "id: Uuid",
+                user_id as "user_id: Uuid",
+                title,
+                content,
+                created_at as "created_at: DateTime<Utc>",
+                updated_at as "updated_at: DateTime<Utc>",
+                share_token
+            "#,
+            share_token,
+            document_id,
+            user_id
+        )
+        .fetch_one(&self.pool)
+        .await?;
+
+        Ok(Some(document))
+    }
+
+    pub async fn find_document_by_share_token(&self, share_token: &str) -> Result<Option<Document>> {
+        let document = sqlx::query_as!(
+            Document,
+            r#"
+            SELECT
+                id as "id: Uuid",
+                user_id as "user_id: Uuid",
+                title,
+                content,
+                created_at as "created_at: DateTime<Utc>",
+                updated_at as "updated_at: DateTime<Utc>",
+                share_token
+            FROM documents WHERE share_token = ?
+            "#,
+            share_token
+        )
+        .fetch_optional(&self.pool)
+        .await?;
+
+        Ok(document)
     }
 
     pub async fn delete_document(&self, document_id: Uuid, user_id: Uuid) -> Result<bool> {
