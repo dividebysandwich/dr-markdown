@@ -16,28 +16,21 @@ pub fn RegisterPage() -> impl IntoView {
     let (confirm_password, set_confirm_password) = signal(String::new());
     let (error_message, set_error_message) = signal(Option::<String>::None);
 
+    // Redirect to home when user is logged in (covers both initial load and post-register)
     Effect::new({
         let navigate = navigate.clone();
         move |_| {
-            if auth.state.get().user.is_some() {
+            let state = auth.state.get();
+            if !state.loading && state.user.is_some() {
                 navigate("/", NavigateOptions { replace: true, ..Default::default() });
             }
         }
     });
 
-    Effect::new({
-        let navigate = navigate.clone();
-        move |_| {
-            if let Some(result) = auth.register.value().get() {
-                match result {
-                    Ok(_) => {
-                        navigate("/", NavigateOptions { replace: true, ..Default::default() });
-                    }
-                    Err(err) => {
-                        set_error_message.set(Some(err));
-                    }
-                }
-            }
+    // Only use register action result for error display, not navigation
+    Effect::new(move |_| {
+        if let Some(Err(err)) = auth.register.value().get() {
+            set_error_message.set(Some(err));
         }
     });
 

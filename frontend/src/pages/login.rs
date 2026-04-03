@@ -16,30 +16,23 @@ pub fn LoginPage() -> impl IntoView {
     let (password, set_password) = signal(String::new());
     let (error_message, set_error_message) = signal(Option::<String>::None);
 
+    // Redirect to home when user is logged in (covers both initial load and post-login)
     {
         let navigate = navigate.clone();
         Effect::new(move |_| {
-            if auth.state.get().user.is_some() {
+            let state = auth.state.get();
+            if !state.loading && state.user.is_some() {
                 navigate("/", NavigateOptions { replace: true, ..Default::default() });
             }
         });
     }
 
-    {
-        let navigate = navigate.clone();
-        Effect::new(move |_| {
-            if let Some(result) = auth.login.value().get() {
-                match result {
-                    Ok(_) => {
-                        navigate("/", NavigateOptions { replace: true, ..Default::default() });
-                    }
-                    Err(err) => {
-                        set_error_message.set(Some(err));
-                    }
-                }
-            }
-        });
-    }
+    // Only use login action result for error display, not navigation
+    Effect::new(move |_| {
+        if let Some(Err(err)) = auth.login.value().get() {
+            set_error_message.set(Some(err));
+        }
+    });
 
     let on_submit = move |ev: leptos::ev::SubmitEvent| {
         ev.prevent_default();
