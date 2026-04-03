@@ -1,6 +1,7 @@
 use leptos::prelude::*;
 use leptos_router::components::A;
 use leptos_router::hooks::{use_navigate, use_params_map};
+use leptos_router::NavigateOptions;
 use uuid::Uuid;
 use std::sync::Arc;
 use leptos::task::spawn_local;
@@ -21,14 +22,14 @@ pub fn DocumentPage() -> impl IntoView {
     Effect::new(move |prev: Option<()>| {
         delete_trigger.get();
         if prev.is_some() {
-            navigate_for_delete("/", Default::default());
+            navigate_for_delete("/", NavigateOptions { replace: true, ..Default::default() });
         }
         ()
     });
 
     Effect::new(move |_| {
         if !auth.state.get().loading && auth.state.get().user.is_none() {
-            navigate_for_auth("/login", Default::default());
+            navigate_for_auth("/login", NavigateOptions { replace: true, ..Default::default() });
         }
     });
 

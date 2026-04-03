@@ -1,5 +1,6 @@
 use leptos::prelude::*;
 use leptos_router::hooks::use_navigate;
+use leptos_router::NavigateOptions;
 use leptos_router::components::A;
 
 use crate::auth::use_auth;
@@ -19,7 +20,7 @@ pub fn RegisterPage() -> impl IntoView {
         let navigate = navigate.clone();
         move |_| {
             if auth.state.get().user.is_some() {
-                navigate("/", Default::default());
+                navigate("/", NavigateOptions { replace: true, ..Default::default() });
             }
         }
     });
@@ -30,7 +31,7 @@ pub fn RegisterPage() -> impl IntoView {
             if let Some(result) = auth.register.value().get() {
                 match result {
                     Ok(_) => {
-                        navigate("/", Default::default());
+                        navigate("/", NavigateOptions { replace: true, ..Default::default() });
                     }
                     Err(err) => {
                         set_error_message.set(Some(err));

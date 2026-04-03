@@ -2,6 +2,7 @@ use leptos::*;
 use leptos::prelude::*;
 use leptos::task::spawn_local;
 use leptos_router::hooks::use_navigate;
+use leptos_router::NavigateOptions;
 use uuid::Uuid;
 use std::sync::Arc;
 use flate2::write::ZlibEncoder;
@@ -26,7 +27,7 @@ pub fn HomePage() -> impl IntoView {
 
     Effect::new(move |_| {
         if !auth.state.get().loading && auth.state.get().user.is_none() {
-            navigate("/login", Default::default());
+            navigate("/login", NavigateOptions { replace: true, ..Default::default() });
         }
     });
 
