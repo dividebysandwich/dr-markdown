@@ -1,6 +1,4 @@
 use leptos::prelude::*;
-use leptos_router::hooks::use_navigate;
-use leptos_router::NavigateOptions;
 use leptos_router::components::A;
 
 use crate::auth::use_auth;
@@ -9,20 +7,20 @@ use crate::app::APP_BASE;
 #[component]
 pub fn RegisterPage() -> impl IntoView {
     let auth = use_auth();
-    let navigate = use_navigate();
 
     let (username, set_username) = signal(String::new());
     let (password, set_password) = signal(String::new());
     let (confirm_password, set_confirm_password) = signal(String::new());
     let (error_message, set_error_message) = signal(Option::<String>::None);
 
-    // Redirect to home when user is logged in (covers both initial load and post-register)
-    Effect::new({
-        let navigate = navigate.clone();
-        move |_| {
-            let state = auth.state.get();
-            if !state.loading && state.user.is_some() {
-                navigate("/", NavigateOptions { replace: true, ..Default::default() });
+    // Redirect to home when user is logged in — use window.location to avoid loops.
+    Effect::new(move |_| {
+        let state = auth.state.get();
+        if !state.loading && state.user.is_some() {
+            if let Some(window) = web_sys::window() {
+                let base = APP_BASE;
+                let target = if base.is_empty() { "/".to_string() } else { format!("{}/", base) };
+                let _ = window.location().set_href(&target);
             }
         }
     });

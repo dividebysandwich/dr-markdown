@@ -23,175 +23,181 @@ use crate::{
 #[component]
 pub fn HomePage() -> impl IntoView {
     let auth = use_auth();
-    let navigate = use_navigate();
 
+    // Redirect to login if not authenticated — use window.location to avoid
+    // reactive pushState loops between HomePage and LoginPage.
     Effect::new(move |_| {
-        if !auth.state.get().loading && auth.state.get().user.is_none() {
-            navigate("/login", NavigateOptions { replace: true, ..Default::default() });
+        let state = auth.state.get();
+        if !state.loading && state.user.is_none() {
+            if let Some(window) = web_sys::window() {
+                let base = APP_BASE;
+                let target = if base.is_empty() { "/login".to_string() } else { format!("{}/login", base) };
+                let _ = window.location().set_href(&target);
+            }
         }
     });
 
     let sidebar_open = RwSignal::new(false);
 
-    view! {
-        <Show
-            when=move || !auth.state.get().loading && auth.state.get().user.is_some()
-            fallback=move || {
-                if auth.state.get().loading {
-                    view! { <div class="min-h-screen flex items-center justify-center"><div class="animate-spin rounded-full h-10 w-10 border-b-2 border-blue-600"></div></div> }
+    // Capture user/token once at render time (not reactively).
+    // If user is None here, the effect above will redirect.
+    let initial_state = auth.state.get_untracked();
+    let user = match initial_state.user {
+        Some(u) => u,
+        None => return view! {
+            <div class="min-h-screen flex items-center justify-center">
+                <div class="animate-spin rounded-full h-10 w-10 border-b-2 border-blue-600"></div>
+            </div>
+        }.into_any(),
+    };
+    let token = initial_state.token.unwrap_or_default();
+
+    let documents = RwSignal::new(Vec::<DocumentSummary>::new());
+    let selected_document = RwSignal::new(Option::<Document>::None);
+    let loading_documents = RwSignal::new(true);
+    let error_message = RwSignal::new(Option::<String>::None);
+
+    let client = Arc::new(ApiClient::with_token(token));
+    let editor_context = use_editor();
+    let dirty = use_dirty();
+
+    // Load documents once
+    let client_effect = client.clone();
+    spawn_local(async move {
+        match client_effect.get_documents().await {
+            Ok(docs) => {
+                documents.set(docs);
+                loading_documents.set(false);
+            },
+            Err(err) => {
+                if err.status == 401 {
+                    // Token expired — clear auth and redirect
+                    auth.logout.dispatch(());
                 } else {
-                    view! { <div class="min-h-screen flex items-center justify-center"><div class="text-gray-500 dark:text-gray-400">"Redirecting to login..."</div></div> }
+                    error_message.set(Some(err.error));
+                    loading_documents.set(false);
                 }
             }
-        >
-            {move || {
-                let auth_state = auth.state.get();
-                let user = auth_state.user.unwrap();
-                let token = auth_state.token.unwrap();
+        }
+    });
 
-                let documents = RwSignal::new(Vec::<DocumentSummary>::new());
-                let selected_document = RwSignal::new(Option::<Document>::None);
-                let loading_documents = RwSignal::new(true);
-                let error_message = RwSignal::new(Option::<String>::None);
-
-                let client = Arc::new(ApiClient::with_token(token.clone()));
-                let editor_context = use_editor();
-                let dirty = use_dirty();
-
-                let client_effect = client.clone();
-                Effect::new(move |_| {
-                    let client_effect_clone = client_effect.clone();
-                    spawn_local(async move {
-                        match client_effect_clone.get_documents().await {
-                            Ok(docs) => {
-                                documents.set(docs);
-                                loading_documents.set(false);
-                            },
-                            Err(err) => {
-                                error_message.set(Some(err.error));
-                                loading_documents.set(false);
-                            }
-                        }
+    let client_action = client.clone();
+    let create_document = Action::new_local(move |title: &String| {
+        let title = title.clone();
+        let client_action = client_action.clone();
+        async move {
+            match client_action.create_document(&title, Some("# New Document\n\nStart writing...")).await {
+                Ok(doc) => {
+                    documents.update(|docs| {
+                        docs.insert(0, DocumentSummary {
+                            id: doc.id,
+                            title: doc.title.clone(),
+                            created_at: doc.created_at,
+                            updated_at: doc.updated_at,
+                        });
                     });
-                });
+                    selected_document.set(Some(doc));
+                    dirty.0.set(false);
+                    Ok(())
+                }
+                Err(err) => Err(err),
+            }
+        }
+    });
 
-                let client_action = client.clone();
-                let create_document = Action::new_local(move |title: &String| {
-                    let title = title.clone();
-                    let client_action = client_action.clone();
-                    async move {
-                        match client_action.create_document(&title, Some("# New Document\n\nStart writing...")).await {
+    let client_for_editor = client.clone();
+    let client_for_on_select = client.clone();
+    let user_name = user.username.clone();
+
+    view! {
+        <div class="relative flex h-full bg-gray-50 dark:bg-gray-900">
+            <DocumentSidebar
+                documents=documents.read_only().into()
+                selected_document=selected_document.read_only().into()
+                loading=loading_documents.read_only().into()
+                on_select=move |doc_id| {
+                    let client = client_for_on_select.clone();
+                    spawn_local(async move {
+                        match client.get_document(doc_id).await {
                             Ok(doc) => {
-                                documents.update(|docs| {
-                                    docs.insert(0, DocumentSummary {
-                                        id: doc.id,
-                                        title: doc.title.clone(),
-                                        created_at: doc.created_at,
-                                        updated_at: doc.updated_at,
-                                    });
-                                });
                                 selected_document.set(Some(doc));
                                 dirty.0.set(false);
-                                Ok(())
-                            }
-                            Err(err) => Err(err),
+                            },
+                            Err(err) => error_message.set(Some(err.error)),
                         }
-                    }
-                });
-
-                let client_for_editor = client.clone();
-                let client_for_on_select = client.clone();
-
-                view! {
-                    <div class="relative flex h-full bg-gray-50 dark:bg-gray-900">
-                        <DocumentSidebar
-                            documents=documents.read_only().into()
-                            selected_document=selected_document.read_only().into()
-                            loading=loading_documents.read_only().into()
-                            on_select=move |doc_id| {
-                                let client = client_for_on_select.clone();
-                                spawn_local(async move {
-                                    match client.get_document(doc_id).await {
-                                        Ok(doc) => {
-                                            selected_document.set(Some(doc));
-                                            dirty.0.set(false);
-                                        },
-                                        Err(err) => error_message.set(Some(err.error)),
-                                    }
-                                });
-                            }
-                            on_create=move |title| { create_document.dispatch(title); }
-                            on_logout=move || { auth.logout.dispatch(()); }
-                            on_theme=move || {
-                                if let Some(mut current_user) = auth.state.get().user {
-                                    let current_theme = current_user.theme.clone();
-                                    current_user.theme = if current_theme == THEME_LIGHT {
-                                        THEME_DARK.to_string()
-                                    } else {
-                                        THEME_LIGHT.to_string()
-                                    };
-                                    auth.update_settings.dispatch(current_user);
-                                }
-                            }
-                            user_name=user.username.clone()
-                        />
-
-                        <Show when=move || sidebar_open.get()>
-                            <div
-                                class="fixed inset-0 bg-black/40 z-20 md:hidden"
-                                on:click=move |_| sidebar_open.set(false)
-                            ></div>
-                        </Show>
-
-                        <main class="flex-1 flex flex-col overflow-hidden">
-                            <Show
-                                when=move || selected_document.get().is_some()
-                                fallback=move || view! {
-                                    <div class="flex-1 flex items-center justify-center p-8">
-                                        <div class="text-center max-w-md">
-                                            <svg class="w-16 h-16 mx-auto text-gray-300 dark:text-gray-600 mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
-                                            </svg>
-                                            <h2 class="text-xl font-semibold text-gray-700 dark:text-gray-300 mb-2">"Welcome to Dr. Markdown"</h2>
-                                            <p class="text-gray-500 dark:text-gray-400 text-sm">"Select a document from the sidebar or create a new one to get started."</p>
-                                        </div>
-                                    </div>
-                                }
-                            >
-                                <DocumentEditor
-                                    document=selected_document.get().unwrap()
-                                    on_save=move |updated_doc| {
-                                        selected_document.set(Some(updated_doc.clone()));
-                                        dirty.0.set(false);
-                                        documents.update(|docs| {
-                                            if let Some(doc_summary) = docs.iter_mut().find(|d| d.id == updated_doc.id) {
-                                                doc_summary.title = updated_doc.title.clone();
-                                                doc_summary.updated_at = updated_doc.updated_at;
-                                            }
-                                        });
-                                    }
-                                    on_delete=move |doc_id| {
-                                        documents.update(|docs| {
-                                            docs.retain(|d| d.id != doc_id);
-                                        });
-                                        selected_document.set(None);
-                                        editor_context.0.set(String::new());
-                                        dirty.0.set(false);
-                                    }
-                                    client=client_for_editor.clone()
-                                />
-                            </Show>
-                             {move || error_message.get().map(|msg| view! {
-                                <div class="bg-red-50 dark:bg-red-900/20 border-l-4 border-red-400 p-4 m-4 rounded-r-lg">
-                                    <p class="text-sm text-red-700 dark:text-red-400">{msg}</p>
-                                </div>
-                            })}
-                        </main>
-                    </div>
+                    });
                 }
-            }}
-        </Show>
-    }
+                on_create=move |title| { create_document.dispatch(title); }
+                on_logout=move || {
+                    auth.logout.dispatch(());
+                }
+                on_theme=move || {
+                    if let Some(mut current_user) = auth.state.get().user {
+                        let current_theme = current_user.theme.clone();
+                        current_user.theme = if current_theme == THEME_LIGHT {
+                            THEME_DARK.to_string()
+                        } else {
+                            THEME_LIGHT.to_string()
+                        };
+                        auth.update_settings.dispatch(current_user);
+                    }
+                }
+                user_name=user_name
+            />
+
+            <Show when=move || sidebar_open.get()>
+                <div
+                    class="fixed inset-0 bg-black/40 z-20 md:hidden"
+                    on:click=move |_| sidebar_open.set(false)
+                ></div>
+            </Show>
+
+            <main class="flex-1 flex flex-col overflow-hidden">
+                <Show
+                    when=move || selected_document.get().is_some()
+                    fallback=move || view! {
+                        <div class="flex-1 flex items-center justify-center p-8">
+                            <div class="text-center max-w-md">
+                                <svg class="w-16 h-16 mx-auto text-gray-300 dark:text-gray-600 mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
+                                </svg>
+                                <h2 class="text-xl font-semibold text-gray-700 dark:text-gray-300 mb-2">"Welcome to Dr. Markdown"</h2>
+                                <p class="text-gray-500 dark:text-gray-400 text-sm">"Select a document from the sidebar or create a new one to get started."</p>
+                            </div>
+                        </div>
+                    }
+                >
+                    <DocumentEditor
+                        document=selected_document.get().unwrap()
+                        on_save=move |updated_doc| {
+                            selected_document.set(Some(updated_doc.clone()));
+                            dirty.0.set(false);
+                            documents.update(|docs| {
+                                if let Some(doc_summary) = docs.iter_mut().find(|d| d.id == updated_doc.id) {
+                                    doc_summary.title = updated_doc.title.clone();
+                                    doc_summary.updated_at = updated_doc.updated_at;
+                                }
+                            });
+                        }
+                        on_delete=move |doc_id| {
+                            documents.update(|docs| {
+                                docs.retain(|d| d.id != doc_id);
+                            });
+                            selected_document.set(None);
+                            editor_context.0.set(String::new());
+                            dirty.0.set(false);
+                        }
+                        client=client_for_editor.clone()
+                    />
+                </Show>
+                 {move || error_message.get().map(|msg| view! {
+                    <div class="bg-red-50 dark:bg-red-900/20 border-l-4 border-red-400 p-4 m-4 rounded-r-lg">
+                        <p class="text-sm text-red-700 dark:text-red-400">{msg}</p>
+                    </div>
+                })}
+            </main>
+        </div>
+    }.into_any()
 }
 
 fn generate_kroki_url(diagram_type: &str, code: &str) -> String {

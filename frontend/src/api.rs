@@ -37,12 +37,15 @@ async fn handle_response<T: DeserializeOwned>(response: Response) -> Result<T, A
     if response.ok() {
         response.json().await.map_err(|e| ApiError {
             error: format!("JSON parse error: {}", e),
+            status: 0,
         })
     } else {
-        // Try to parse an ApiError from the body, otherwise provide a generic error.
-        let error: ApiError = response.json().await.unwrap_or(ApiError {
-            error: format!("API error: {}", response.status_text()),
+        let status = response.status();
+        let mut error: ApiError = response.json().await.unwrap_or(ApiError {
+            error: format!("API error: {}", status),
+            status: 0,
         });
+        error.status = status;
         Err(error)
     }
 }
@@ -75,6 +78,7 @@ impl ApiClient {
     ) -> Result<T, ApiError> {
         let response = req.send().await.map_err(|e| ApiError {
             error: format!("Network error: {}", e),
+            status: 0,
         })?;
         handle_response(response).await
     }
@@ -88,10 +92,12 @@ impl ApiClient {
             })
             .map_err(|e| ApiError {
                 error: format!("Serialization error: {}", e),
+                status: 0,
             })?;
 
         let response = request.send().await.map_err(|e| ApiError {
             error: format!("Network error: {}", e),
+            status: 0,
         })?;
 
         handle_response(response).await
@@ -106,10 +112,12 @@ impl ApiClient {
             })
             .map_err(|e| ApiError {
                 error: format!("Serialization error: {}", e),
+                status: 0,
             })?;
         
         let response = request.send().await.map_err(|e| ApiError {
             error: format!("Network error: {}", e),
+            status: 0,
         })?;
 
         handle_response(response).await
@@ -124,10 +132,12 @@ impl ApiClient {
             })
             .map_err(|e| ApiError {
                 error: format!("Serialization error: {}", e),
+                status: 0,
             })?;
 
         let response = request.send().await.map_err(|e| ApiError {
             error: format!("Network error: {}", e),
+            status: 0,
         })?;
 
         handle_response(response).await
@@ -158,10 +168,12 @@ impl ApiClient {
             })
             .map_err(|e| ApiError {
                 error: format!("Serialization error: {}", e),
+                status: 0,
             })?;
 
         let response = request.send().await.map_err(|e| ApiError {
             error: format!("Network error: {}", e),
+            status: 0,
         })?;
         
         handle_response(response).await
@@ -181,10 +193,12 @@ impl ApiClient {
             })
             .map_err(|e| ApiError {
                 error: format!("Serialization error: {}", e),
+                status: 0,
             })?;
         
         let response = request.send().await.map_err(|e| ApiError {
             error: format!("Network error: {}", e),
+            status: 0,
         })?;
 
         handle_response(response).await
@@ -194,14 +208,18 @@ impl ApiClient {
         let req_builder = self.build_request("DELETE", &format!("/documents/{}", id));
         let response = req_builder.send().await.map_err(|e| ApiError {
             error: format!("Network error: {}", e),
+            status: 0,
         })?;
 
         if response.ok() {
             Ok(())
         } else {
-            let error: ApiError = response.json().await.unwrap_or(ApiError {
-                error: format!("API error: {}", response.status_text()),
+            let status = response.status();
+            let mut error: ApiError = response.json().await.unwrap_or(ApiError {
+                error: format!("API error: {}", status),
+                status: 0,
             });
+            error.status = status;
             Err(error)
         }
     }
@@ -210,6 +228,7 @@ impl ApiClient {
         let req_builder = self.build_request("POST", &format!("/documents/{}/share", id));
         let response = req_builder.send().await.map_err(|e| ApiError {
             error: format!("Network error: {}", e),
+            status: 0,
         })?;
         handle_response(response).await
     }
@@ -218,6 +237,7 @@ impl ApiClient {
         let req_builder = self.build_request("DELETE", &format!("/documents/{}/share", id));
         let response = req_builder.send().await.map_err(|e| ApiError {
             error: format!("Network error: {}", e),
+            status: 0,
         })?;
         handle_response(response).await
     }

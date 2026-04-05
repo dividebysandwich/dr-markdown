@@ -1,7 +1,6 @@
 use leptos::prelude::*;
 use leptos_router::components::A;
-use leptos_router::hooks::{use_navigate, use_params_map};
-use leptos_router::NavigateOptions;
+use leptos_router::hooks::use_params_map;
 use uuid::Uuid;
 use std::sync::Arc;
 use leptos::task::spawn_local;
@@ -13,23 +12,29 @@ use crate::app::APP_BASE;
 pub fn DocumentPage() -> impl IntoView {
     let auth = use_auth();
     let params = use_params_map();
-    let navigate = use_navigate();
-    let navigate_for_delete = navigate.clone();
-    let navigate_for_auth = navigate.clone();
 
     let (delete_trigger, set_delete_trigger) = signal(());
 
     Effect::new(move |prev: Option<()>| {
         delete_trigger.get();
         if prev.is_some() {
-            navigate_for_delete("/", NavigateOptions { replace: true, ..Default::default() });
+            if let Some(window) = web_sys::window() {
+                let base = APP_BASE;
+                let target = if base.is_empty() { "/".to_string() } else { format!("{}/", base) };
+                let _ = window.location().set_href(&target);
+            }
         }
         ()
     });
 
     Effect::new(move |_| {
-        if !auth.state.get().loading && auth.state.get().user.is_none() {
-            navigate_for_auth("/login", NavigateOptions { replace: true, ..Default::default() });
+        let state = auth.state.get();
+        if !state.loading && state.user.is_none() {
+            if let Some(window) = web_sys::window() {
+                let base = APP_BASE;
+                let target = if base.is_empty() { "/login".to_string() } else { format!("{}/login", base) };
+                let _ = window.location().set_href(&target);
+            }
         }
     });
 

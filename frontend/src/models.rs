@@ -72,4 +72,12 @@ pub struct UpdateDocumentRequest {
 #[derive(Debug, Deserialize, Clone)]
 pub struct ApiError {
     pub error: String,
+    #[serde(skip, default)]
+    pub status: u16,
+}
+
+impl ApiError {
+    pub fn is_unauthorized(&self) -> bool {
+        self.status == 401
+    }
 }
